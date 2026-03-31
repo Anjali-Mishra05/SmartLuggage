@@ -7,11 +7,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 1. Double check your IPv4 address using 'ipconfig'
 // 2. Ensure port is 5000 (from your server.js)
-const IP_ADDRESS = " 192.168.0.127"; 
-const API_URL = "http://192.168.0.127:5000/api/auth/user-profile";
+const IP_ADDRESS = "10.237.219.52"; 
+const API_URL = "http://10.237.219.52:5000/api/auth/user-profile";
 
 const ProfileOption = ({ icon, title, color, onPress }) => (
   <TouchableOpacity style={styles.optionRow} onPress={onPress}>
@@ -40,7 +41,6 @@ export default function Profile() {
         `${API_URL}?phone=${encodeURIComponent(testPhone)}`
       );
 
-
       const result = await response.json();
 
       console.log("DEBUG RESULT:", result);
@@ -53,11 +53,31 @@ export default function Profile() {
 
         setUserData({ ...result, initials });
       } else {
-        setUserData({ name: "No User", phone: "-", email: "-", initials: "?" });
+        // Fallback to AsyncStorage
+        const storedName = await AsyncStorage.getItem("userName");
+        if (storedName) {
+          const nameParts = storedName.trim().split(' ');
+          const initials = nameParts.length > 1
+            ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase()
+            : nameParts[0][0].toUpperCase();
+          setUserData({ name: storedName, phone: testPhone, email: "-", initials });
+        } else {
+          setUserData({ name: "No User", phone: "-", email: "-", initials: "?" });
+        }
       }
     } catch (error) {
       console.error("Fetch Error:", error);
-      setUserData({ name: "Server Error", phone: "Check URL", email: "Check Console", initials: "!" });
+      // Fallback to AsyncStorage on network error
+      const storedName = await AsyncStorage.getItem("userName");
+      if (storedName) {
+        const nameParts = storedName.trim().split(' ');
+        const initials = nameParts.length > 1
+          ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase()
+          : nameParts[0][0].toUpperCase();
+        setUserData({ name: storedName, phone: global.userPhone, email: "-", initials });
+      } else {
+        setUserData({ name: "Error Loading", phone: "Check Server", email: "Try Again", initials: "!" });
+      }
     } finally {
       setLoading(false);
     }

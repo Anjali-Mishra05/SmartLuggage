@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { createDropLocation } from '../utils/airportMappings';
 
 export default function LuggageDetails() {
   const router = useRouter();
@@ -227,17 +228,21 @@ export default function LuggageDetails() {
         {/* Continue Button */}
         <TouchableOpacity 
           style={styles.nextBtn} 
-          onPress={() => router.push({
-            pathname: '/(booking)/pickup', 
-            params: {
-              ...flightParams, 
-              bags: bagCount,
-              weight: selectedWeight,
-              fragile: fragile,
-              checkin: checkinSelected,
-              photos: JSON.stringify(photos) 
-            }
-          })}
+          onPress={() => {
+            const dropLocation = createDropLocation(flightParams.depAirport, flightParams.terminal);
+            router.push({
+              pathname: '/(booking)/pickup', 
+              params: {
+                ...flightParams, 
+                bags: bagCount,
+                weight: selectedWeight,
+                fragile: fragile,
+                checkin: checkinSelected,
+                dropLocation: dropLocation,
+                photos: JSON.stringify(photos) 
+              }
+            });
+          }}
         >
           <LinearGradient 
             colors={['#FF5F5F', '#FF8C00']} 

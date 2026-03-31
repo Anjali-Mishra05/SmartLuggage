@@ -7,13 +7,6 @@ export default function RootLayout() {
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="(booking)" />
-    <Stack.Screen 
-        name="report" 
-        options={{ 
-          presentation: 'modal', // Makes it feel like a sub-page
-          animation: 'slide_from_right' 
-        }} 
-      />
     </Stack>
   );
 }

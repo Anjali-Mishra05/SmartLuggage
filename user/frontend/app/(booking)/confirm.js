@@ -15,21 +15,21 @@ export default function BookingSummary() {
   const { 
     // From flight.js
     airline = "Not selected", 
-    flightNum = "N/A", 
+    flightNo = "N/A", 
     depCity = "", 
     arrCity = "",
     depTime = "",
     
     // From luggage.js
     bags = "0", 
-    weight = "0 kg", 
-    luggageTypes = "Not specified",
+    weight = "0 kg",
+    checkin = false,
+    fragile = false,
+    dropLocation = "Not available",
 
     // From pickup.js
-    pickup = "Not provided", 
-    landmark = "", 
-    drop = "Not provided",
-    type = "Other"
+    pickupAddress = "Not provided", 
+    pickupTime = ""
   } = params;
 
   return (
@@ -69,7 +69,7 @@ export default function BookingSummary() {
             </View>
             <View style={styles.detailTexts}>
               <Text style={styles.detailLabel}>Flight</Text>
-              <Text style={styles.detailMain}>{flightNum} • {airline}</Text>
+              <Text style={styles.detailMain}>{flightNo} • {airline}</Text>
               <Text style={styles.detailSub}>{depCity} to {arrCity} • {depTime}</Text>
             </View>
           </View>
@@ -81,8 +81,8 @@ export default function BookingSummary() {
             </View>
             <View style={styles.detailTexts}>
               <Text style={styles.detailLabel}>Luggage</Text>
-              <Text style={styles.detailMain}>{bags} {parseInt(bags) === 1 ? 'Bag' : 'Bags'} ({luggageTypes})</Text>
-              <Text style={styles.detailSub}>Max {weight} total</Text>
+              <Text style={styles.detailMain}>{bags} {parseInt(bags) === 1 ? 'Bag' : 'Bags'} ({checkin ? 'Check-in' : 'Cargo'})</Text>
+              <Text style={styles.detailSub}>Max {weight} total{fragile ? ' • Fragile' : ''}</Text>
             </View>
           </View>
 
@@ -91,9 +91,9 @@ export default function BookingSummary() {
               <Feather name="map-pin" size={16} color="#FF5F5F" />
             </View>
             <View style={styles.detailTexts}>
-              <Text style={styles.detailLabel}>Pickup From ({type})</Text>
-              <Text style={styles.detailMain}>{pickup}</Text>
-              {landmark ? <Text style={styles.detailSub}>Near {landmark}</Text> : null}
+              <Text style={styles.detailLabel}>Pickup Location</Text>
+              <Text style={styles.detailMain}>{pickupAddress}</Text>
+              {pickupTime ? <Text style={styles.detailSub}>{pickupTime}</Text> : null}
             </View>
           </View>
 
@@ -103,7 +103,7 @@ export default function BookingSummary() {
             </View>
             <View style={styles.detailTexts}>
               <Text style={styles.detailLabel}>Drop Location</Text>
-              <Text style={styles.detailMain}>{drop}</Text>
+              <Text style={styles.detailMain}>{dropLocation}</Text>
             </View>
           </View>
         </View>

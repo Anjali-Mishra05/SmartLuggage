@@ -140,9 +140,11 @@ router.get("/user-profile", (req, res) => {
         return res.json({ success: false, message: "Phone required" });
     }
 
-    const query = "SELECT name, phone, email FROM users WHERE phone = ? LIMIT 1";
+    // Handle both "+91XXXXXXXXXX" and "XXXXXXXXXX" formats
+    const searchPhone = `%${phone.replace("+91", "")}`;
+    const query = "SELECT name, phone, email FROM users WHERE phone LIKE ? LIMIT 1";
 
-    db.query(query, [phone], (err, results) => {
+    db.query(query, [searchPhone], (err, results) => {
         if (err) {
             console.log(err);
             return res.json({ success: false });

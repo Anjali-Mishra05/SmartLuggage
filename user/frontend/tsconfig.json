@@ -2,14 +2,13 @@
   "compilerOptions": {
     "allowJs": true,
     "checkJs": false,
-    "strict": false
+    "strict": false,
+    "noEmit": true
   },
   "extends": "expo/tsconfig.base",
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "**/*.js",
-    "**/*.jsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
   ]
