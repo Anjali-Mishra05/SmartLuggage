@@ -15,15 +15,26 @@ export default function OtpScreen() {
     if (otpValue.length !== 6) { Alert.alert("Error", "Please enter a 6-digit OTP"); return; }
     
     try {
-      const res = await fetch("http://10.84.20.52:5000/api/auth/verify-otp", {
+      const res = await fetch("http://10.27.133.52:5000/api/auth/verify-otp", {
         method: "POST", 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone, otp: otpValue })
       });
       
       const data = await res.json();
+      console.log('DEBUG OTP: Received data from backend:', data);
+      console.log('DEBUG OTP: Token value:', data.token);
       
       if (data.success) { 
+        // Save token from response
+        if (data.token) {
+          await AsyncStorage.setItem('authToken', data.token);
+          const savedToken = await AsyncStorage.getItem('authToken');
+          console.log('DEBUG OTP: Token saved to AsyncStorage:', savedToken);
+        } else {
+          console.error('DEBUG OTP: No token received from backend!');
+        }
+        
         // SAVE NAME TO STORAGE PERMANENTLY
         if (data.user?.name) {
           await AsyncStorage.setItem("userName", data.user.name);

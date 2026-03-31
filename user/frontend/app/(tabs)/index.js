@@ -1498,7 +1498,22 @@ export default function Home() {
     }
     setPickupAddress(currentAddr);
     
-    // ✅ Save current location to AsyncStorage so pickup screen can access it
+    // ✅ Save current location to AsyncStorage with coordinates
+    await AsyncStorage.setItem(
+      "pickupLocationDetails",
+      JSON.stringify({
+        address: currentAddr,
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+        city: res[0]?.city || "",
+        state: res[0]?.region || "",
+        country: res[0]?.country || "",
+        name: displayName,
+        phone: global.userPhone || "",
+        tag: "Home"
+      })
+    );
+    
     await AsyncStorage.setItem(
       "pickupDetails",
       JSON.stringify({
@@ -1544,17 +1559,23 @@ export default function Home() {
 
   useFocusEffect(
   useCallback(() => {
-    // When focusing on homepage, check AsyncStorage
-    const checkAndLoadPickup = async () => {
+    // When focusing on homepage, load name and location from AsyncStorage
+    const loadDataOnFocus = async () => {
       try {
+        // Load name
+        const savedName = await AsyncStorage.getItem("userName");
+        if (savedName) {
+          setDisplayName(savedName);
+        }
+        
+        // Load pickup location
         const saved = await AsyncStorage.getItem("pickupDetails");
         if (saved) {
           const data = JSON.parse(saved);
-          // Load ANY saved location (user-selected OR current location saved earlier)
           if (data.address) {
             setPickupAddress(data.address);
             setUserSelectedPickup(data.userSelected || false);
-            return; // ✅ Don't refetch
+            return;
           }
         }
         
@@ -1565,7 +1586,7 @@ export default function Home() {
       }
     };
     
-    checkAndLoadPickup();
+    loadDataOnFocus();
   }, [])
 );
   // When user manually selects a pickup

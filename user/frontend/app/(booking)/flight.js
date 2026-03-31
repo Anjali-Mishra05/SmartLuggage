@@ -99,7 +99,9 @@ export default function FlightDetails() {
             arrCity: arrCity.city,
             arrAirport: arrCity.name,
             depDate: depDate.toLocaleDateString('en-GB'),
-            depTime: depTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})
+            depTime: depTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true}),
+            arrDate: arrDate.toLocaleDateString('en-GB'),
+            arrTime: arrTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})
         } 
     });
   };

@@ -3,6 +3,8 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const authRoutes = require("./routes/auth");
+const bookingRoutes = require("./routes/bookings");
+const initializeDatabase = require("./initDB");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -13,6 +15,9 @@ const host = '0.0.0.0';
 app.use(cors());
 app.use(bodyParser.json());
 
+// Initialize database tables
+initializeDatabase();
+
 // Debug Logger
 app.use((req, res, next) => {
     console.log(`DEBUG: ${req.method} request to ${req.url}`);
@@ -21,6 +26,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/bookings", bookingRoutes);
 app.get("/", (req, res) => {
   res.send("Server is working ✅");
 });

@@ -198,6 +198,12 @@ export default function MapScreen() {
     latitude: markerCoord?.latitude,
     longitude: markerCoord?.longitude,
     userSelected: true, // ✅ IMPORTANT FLAG
+    street: selectedAddress.split(',')[0] || '',
+    city: selectedAddress.split(',')[1] || '',
+    state: selectedAddress.split(',')[2] || '',
+    postalCode: '',
+    country: 'IN',
+    phone: mobile,
   };
 
   try {
@@ -205,9 +211,17 @@ export default function MapScreen() {
   "pickupDetails",
   JSON.stringify({
     address: selectedAddress,
-    userSelected: true
+    userSelected: true,
+    ...pickupData
   })
 );
+
+  // ✅ Also save full pickup location details for the booking database
+  await AsyncStorage.setItem(
+    "pickupLocationDetails",
+    JSON.stringify(pickupData)
+  );
+
     router.push('/(tabs)');
   } catch (err) {
     console.log("Error saving pickup:", err);

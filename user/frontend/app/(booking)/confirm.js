@@ -1,15 +1,19 @@
 import React from 'react';
 import { 
   View, Text, StyleSheet, ScrollView, TouchableOpacity, 
-  SafeAreaView, Platform, StatusBar 
+  SafeAreaView, Platform, StatusBar, ActivityIndicator, Alert 
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createBooking } from '../utils/bookingService';
+import { useState } from 'react';
 
 export default function BookingSummary() {
   const router = useRouter();
   const params = useLocalSearchParams(); 
+  const [isLoading, setIsLoading] = useState(false);
 
   // Destructure all data passed through the chain
   const { 
@@ -19,6 +23,13 @@ export default function BookingSummary() {
     depCity = "", 
     arrCity = "",
     depTime = "",
+    depDate = "",
+    arrDate = "",
+    arrTime = "",
+    terminal = "T2",
+    depAirport = "",
+    arrAirport = "",
+    isInternational = "false",
     
     // From luggage.js
     bags = "0", 
@@ -26,11 +37,127 @@ export default function BookingSummary() {
     checkin = false,
     fragile = false,
     dropLocation = "Not available",
+    photos = "[]",
 
     // From pickup.js
     pickupAddress = "Not provided", 
-    pickupTime = ""
+    pickupTime = "",
+    pincode = "",
+    additionalInfo = ""
   } = params;
+
+  const handleConfirmBooking = async () => {
+    setIsLoading(true);
+    try {
+      // Get user details and pickup location details from AsyncStorage
+      const userName = await AsyncStorage.getItem('userName');
+      const pickupDetails = await AsyncStorage.getItem('pickupLocationDetails');
+      
+      const pickupData = pickupDetails ? JSON.parse(pickupDetails) : {};
+
+      // Parse photos array
+      let photosArray = [];
+      try {
+        photosArray = photos ? JSON.parse(photos) : [];
+      } catch (e) {
+        console.log("Could not parse photos:", e);
+      }
+
+      // Prepare booking data
+      const bookingData = {
+        // User details
+        username: userName || 'User',
+        
+        // Flight Details
+        isInternational: isInternational === 'true',
+        isDomestic: !(isInternational === 'true'),
+        airlineName: airline,
+        flightNumber: flightNo,
+        terminal: terminal || 'T2',
+        departureAirport: depAirport || depCity,
+        arrivalAirport: arrAirport || arrCity,
+        departureDate: depDate,
+        departureTime: depTime,
+        arrivalDate: arrDate,
+        arrivalTime: arrTime,
+
+        // Luggage Details
+        bagCount: parseInt(bags) || 1,
+        bagWeight: weight,
+        isFragile: fragile === 'true' || fragile === true,
+        isCheckin: checkin === 'true' || checkin === true,
+
+        // Pincode
+        pincode: pincode,
+
+        // Pickup Location
+        pickupAddress: pickupAddress,
+        pickupLatitude: pickupData.latitude || null,
+        pickupLongitude: pickupData.longitude || null,
+        pickupTime: pickupTime,
+        pickupHouse: pickupData.house || '',
+        pickupStreet: pickupData.street || '',
+        pickupCity: pickupData.city || '',
+        pickupState: pickupData.state || '',
+        pickupPostal: pickupData.postalCode || '',
+        pickupCountry: pickupData.country || '',
+        pickupContactName: pickupData.name || '',
+        pickupContactPhone: pickupData.phone || '',
+        pickupTag: pickupData.tag || 'Pickup',
+        pickupNotes: additionalInfo,
+
+        // Drop Location
+        dropAddress: dropLocation,
+        dropLatitude: null,
+        dropLongitude: null,
+        dropHouse: '',
+        dropStreet: '',
+        dropCity: '',
+        dropState: '',
+        dropPostal: '',
+        dropCountry: '',
+        dropContactName: '',
+        dropContactPhone: '',
+        dropTag: 'Drop Location',
+        dropNotes: '',
+
+        // Photos
+        photos: photosArray,
+
+        // Additional Info
+        additionalInfo: additionalInfo,
+      };
+
+      // Save booking to database
+      const response = await createBooking(bookingData);
+      
+      if (response.success) {
+        Alert.alert(
+          'Success',
+          'Booking confirmed successfully!',
+          [
+            {
+              text: 'Continue',
+              onPress: () => {
+                // Clear temporary booking details from storage
+                AsyncStorage.removeItem('pickupDetails');
+                
+                // Navigate to home or bookings screen
+                router.replace('/(tabs)');
+              },
+            },
+          ]
+        );
+      } else {
+        Alert.alert('Error', response.message || 'Failed to confirm booking');
+      }
+    } catch (error) {
+      console.error('Error confirming booking:', error);
+      Alert.alert('Error', error.message || 'Failed to confirm booking');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -115,15 +242,21 @@ export default function BookingSummary() {
           <Text style={styles.priceInfo}>EVERYTHING INCLUDED</Text>
         </View>
 
-        <TouchableOpacity activeOpacity={0.9} style={styles.payButton}>
+        <TouchableOpacity activeOpacity={0.9} style={styles.payButton} onPress={handleConfirmBooking} disabled={isLoading}>
           <LinearGradient 
             colors={['#FF6B6B', '#FF8E53']} 
             start={{x: 0, y: 0}} 
             end={{x: 1, y: 1}} 
             style={styles.gradientBtn}
           >
-            <Text style={styles.payButtonText}>Proceed to Payment</Text>
-            <Feather name="chevron-right" size={20} color="#FFF" />
+            {isLoading ? (
+              <ActivityIndicator color="#FFF" size="small" />
+            ) : (
+              <>
+                <Text style={styles.payButtonText}>Proceed to Payment</Text>
+                <Feather name="chevron-right" size={20} color="#FFF" />
+              </>
+            )}
           </LinearGradient>
         </TouchableOpacity>
 

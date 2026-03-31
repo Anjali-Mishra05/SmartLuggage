@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function LoginScreen() {
   const params = useLocalSearchParams();
@@ -44,7 +45,7 @@ export default function LoginScreen() {
         : { phone: "+91" + phone, password: password };
 
       const response = await fetch(
-        `http://10.84.20.52:5000/api/auth${endpoint}`,
+        `http://10.27.133.52:5000/api/auth${endpoint}`,
         {
           method: "POST",
           headers: {
@@ -65,7 +66,23 @@ export default function LoginScreen() {
             params: { phone: "+91" + phone }
           });
         } else {
-          // Success: Pass the name from DB to the dashboard
+          // Success: Save token and pass the name from DB to the dashboard
+          console.log('DEBUG LOGIN: data object:', data);
+          console.log('DEBUG LOGIN: data.token:', data.token);
+          if (data.token) {
+            await AsyncStorage.setItem('authToken', data.token);
+            const savedToken = await AsyncStorage.getItem('authToken');
+            console.log('DEBUG LOGIN: Token saved successfully to AsyncStorage:', savedToken);
+          } else {
+            console.error('DEBUG LOGIN: No token received from backend!');
+          }
+          
+          // Save user name to AsyncStorage
+          if (data.user?.name) {
+            await AsyncStorage.setItem('userName', data.user.name);
+            console.log('DEBUG LOGIN: Name saved to AsyncStorage:', data.user.name);
+          }
+          
           global.userPhone = data.user.phone;
           console.log("LOGIN PHONE:", global.userPhone);
           router.replace({

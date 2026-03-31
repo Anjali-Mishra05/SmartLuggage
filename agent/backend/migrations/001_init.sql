@@ -86,3 +86,95 @@ CREATE TABLE IF NOT EXISTS kyc_files (
   CONSTRAINT fk_kyc_files_kyc FOREIGN KEY (kyc_id) REFERENCES kyc(id) ON DELETE CASCADE
 );
 
+-- Bookings table for storing flight and luggage booking details
+CREATE TABLE IF NOT EXISTS bookings (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id BIGINT UNSIGNED NOT NULL,
+  
+  -- Flight Details
+  is_international TINYINT(1) NOT NULL DEFAULT 0,
+  airline_name VARCHAR(160) NOT NULL,
+  flight_number VARCHAR(32) NOT NULL,
+  terminal VARCHAR(10),
+  departure_airport VARCHAR(120) NOT NULL,
+  arrival_airport VARCHAR(120) NOT NULL,
+  departure_date DATE NOT NULL,
+  departure_time TIME NOT NULL,
+  arrival_date DATE NOT NULL,
+  arrival_time TIME NOT NULL,
+  
+  -- Luggage Details
+  bag_count INT NOT NULL DEFAULT 1,
+  bag_weight VARCHAR(32),
+  is_fragile TINYINT(1) NOT NULL DEFAULT 0,
+  is_checkin TINYINT(1) NOT NULL DEFAULT 0,
+  
+  -- Pincode
+  pincode VARCHAR(10),
+  
+  -- Booking Status
+  status VARCHAR(32) NOT NULL DEFAULT 'pending', -- pending, confirmed, assigned, completed, cancelled
+  
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  PRIMARY KEY (id),
+  KEY idx_bookings_user (user_id),
+  KEY idx_bookings_status (status),
+  KEY idx_bookings_created (created_at),
+  CONSTRAINT fk_bookings_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Booking Locations table to store pickup and drop locations with coordinates
+CREATE TABLE IF NOT EXISTS booking_locations (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  booking_id BIGINT UNSIGNED NOT NULL,
+  
+  -- Location Type: pickup or drop
+  location_type ENUM('pickup', 'drop') NOT NULL,
+  
+  -- Full Address
+  full_address TEXT NOT NULL,
+  house_number VARCHAR(255),
+  street VARCHAR(255),
+  city VARCHAR(120),
+  state VARCHAR(120),
+  postal_code VARCHAR(32),
+  country VARCHAR(120),
+  
+  -- Coordinates for H3 and geospatial queries
+  latitude DECIMAL(10, 8) NOT NULL,
+  longitude DECIMAL(11, 8) NOT NULL,
+  
+  -- Additional Details
+  location_tag VARCHAR(50), -- Home, Office, Other
+  contact_person_name VARCHAR(160),
+  contact_person_phone VARCHAR(32),
+  additional_notes TEXT,
+  
+  -- H3 Index for fast geospatial queries (for agent assignment)
+  h3_index VARCHAR(64),
+  
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  PRIMARY KEY (id),
+  KEY idx_booking_locations_booking (booking_id),
+  KEY idx_booking_locations_type (location_type),
+  KEY idx_booking_locations_h3 (h3_index),
+  KEY idx_booking_locations_coords (latitude, longitude),
+  CONSTRAINT fk_booking_locations_booking FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
+);
+
+-- Booking Luggage Photos table
+CREATE TABLE IF NOT EXISTS booking_luggage_photos (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  booking_id BIGINT UNSIGNED NOT NULL,
+  photo_url VARCHAR(500) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  
+  PRIMARY KEY (id),
+  KEY idx_luggage_photos_booking (booking_id),
+  CONSTRAINT fk_luggage_photos_booking FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
+);
+

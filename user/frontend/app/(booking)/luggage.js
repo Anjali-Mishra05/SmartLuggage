@@ -238,7 +238,7 @@ export default function LuggageDetails() {
                 weight: selectedWeight,
                 fragile: fragile,
                 checkin: checkinSelected,
-                dropLocation: dropLocation,
+                dropLocation: dropLocation.address,
                 photos: JSON.stringify(photos) 
               }
             });

@@ -12,6 +12,7 @@ import multer from "multer";
 import { getPool, testConnection } from "./db.js";
 import { requireAuth, signToken } from "./auth.js";
 import { signupSchema, loginSchema, kycSchema } from "./validate.js";
+import bookingRoutes from "./routes/bookings.js";
 
 dotenv.config();
 
@@ -222,6 +223,9 @@ app.post(
     return res.json({ ok: true, kycId });
   }
 );
+
+// Bookings API routes
+app.use("/api/bookings", bookingRoutes);
 
 // 404 Handler - MUST be before error handler
 app.use((req, res) => {

@@ -9,6 +9,13 @@ const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH);
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 let otpStore = {}; 
 
+// Simple token generator (base64 encoded phone + timestamp)
+const generateToken = (phone) => {
+  const timestamp = Date.now();
+  const token = Buffer.from(`${phone}:${timestamp}`).toString('base64');
+  return token;
+}; 
+
 // ---------------- REGISTER ----------------
 router.post("/register", (req, res) => {
     const { name, phone, password, email } = req.body;
@@ -87,16 +94,19 @@ router.post("/verify-otp", (req, res) => {
     if (otpStore[phone] === otp) {
         delete otpStore[phone];
 
-        const query = "SELECT name, phone, email FROM users WHERE phone LIKE ?";
+        const query = "SELECT id, name, phone, email FROM users WHERE phone LIKE ?";
         const searchPhone = `%${phone.replace("+91", "")}`;
 
         db.query(query, [searchPhone], (err, results) => {
             if (results && results.length > 0) {
-                console.log(`[Login Success] Verified User: ${results[0].name}`);
+                const user = results[0];
+                const token = generateToken(user.phone);
+                console.log(`[Login Success] Verified User: ${user.name}`);
                 return res.json({ 
                     success: true, 
-                    message: "OTP verified successfully!", 
-                    user: results[0] 
+                    message: "OTP verified successfully!",
+                    token,
+                    user 
                 });
             } else {
                 return res.json({ success: false, message: "User details not found" });
@@ -119,11 +129,14 @@ router.post("/login", (req, res) => {
         if (err) return res.json({ success: false, message: "DB Error", error: err });
 
         if (results.length > 0) {
-            console.log(`[Login Success] Password Login: ${results[0].name}`);
+            const user = results[0];
+            const token = generateToken(user.phone);
+            console.log(`[Login Success] Password Login: ${user.name}`);
             return res.json({ 
                 success: true, 
-                message: "Login successful", 
-                user: results[0] 
+                message: "Login successful",
+                token,
+                user 
             });
         } else {
             return res.json({ success: false, message: "Invalid credentials" });
