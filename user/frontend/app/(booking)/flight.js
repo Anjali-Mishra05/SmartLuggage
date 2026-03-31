@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, View, Text, TouchableOpacity, TextInput, 
-  ScrollView, Modal, FlatList, Dimensions, Platform, Alert, KeyboardAvoidingView 
+  ScrollView, Modal, FlatList, Dimensions, Platform, Alert, KeyboardAvoidingView, SafeAreaView, StatusBar
 } from 'react-native';
 import { MotiView } from 'moti';
 import { router } from 'expo-router';
@@ -180,14 +180,17 @@ export default function FlightDetails() {
         </View>
       </Modal>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <SafeAreaView style={{ backgroundColor: '#FFF' }}>
         <View style={styles.header}>
            <TouchableOpacity onPress={() => router.back()}>
-             <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
+             <MaterialCommunityIcons name="arrow-left" size={24} color="#1A1C1E" />
            </TouchableOpacity>
            <Text style={styles.title}>Flight Details</Text>
            <View style={{width: 24}} /> 
         </View>
+      </SafeAreaView>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
         <View style={styles.stepContainer}>
             <View style={styles.stepItem}>
@@ -362,9 +365,9 @@ export default function FlightDetails() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
-  scroll: { paddingHorizontal: 20, paddingTop: 40, paddingBottom: 40 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  title: { fontSize: 22, fontWeight: '700', color: '#000' },
+  scroll: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 10, paddingBottom: 15, alignItems: 'center' },
+  title: { fontSize: 20, fontWeight: '800', color: '#1A1C1E' },
   pinOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
   pinContent: { width: width * 0.9, backgroundColor: '#FFF', borderRadius: 30, padding: 30, alignItems: 'center', elevation: 10 },
   pinIconCircle: { width: 90, height: 90, borderRadius: 45, backgroundColor: '#FFF5F3', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },

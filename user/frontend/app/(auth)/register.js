@@ -26,7 +26,7 @@ export default function RegisterScreen() {
     const [focus, setFocus] = useState("");
 
     // IP address for backend connection
-    const BASE_URL = "http://10.237.219.52:5000/api/auth";
+    const BASE_URL = "http://10.84.20.52:5000/api/auth";
 
     const handleRegister = async () => {
         let newErrors = {};

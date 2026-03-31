@@ -306,25 +306,36 @@ export default function PickupDetails() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [additionalInfo, setAdditionalInfo] = useState('');
 
-  // ✅ Only load pickup address from homepage/AsyncStorage
+  // ✅ Load pickup address from homepage/AsyncStorage
   useFocusEffect(
     useCallback(() => {
+      let isActive = true;
+
       const loadPickup = async () => {
         try {
+          // First, check if there's a pickupDetails object with address
           const saved = await AsyncStorage.getItem("pickupDetails");
-          if (saved) {
+          if (saved && isActive) {
             const data = JSON.parse(saved);
             if (data.address) {
               setPickupAddress(data.address);
-              await AsyncStorage.removeItem("pickupDetails");
             }
           }
+          
+          // Also check for a stored location from homepage
+          const storedLocation = await AsyncStorage.getItem("homepageLocation");
+          if (storedLocation && isActive) {
+            setPickupAddress(storedLocation);
+          }
         } catch (e) {
-          console.log("Error loading pickup:", e);
+          console.log("Error loading pickup address:", e);
+          if (isActive) setPickupAddress("Unable to fetch location");
         }
       };
 
       loadPickup();
+
+      return () => { isActive = false };
     }, [])
   );
 

@@ -1475,6 +1475,7 @@ export default function Home() {
 
     if (saved) {
       const data = JSON.parse(saved);
+      // Only keep saved location if it was user-selected
       if (data.userSelected && data.address) {
         setPickupAddress(data.address);
         setUserSelectedPickup(true);
@@ -1482,10 +1483,7 @@ export default function Home() {
       }
     }
 
-    // If user has previously selected pickup, DO NOT fetch location again
-    if (userSelectedPickup) return;
-
-    // Only fetch current location if nothing selected yet
+    // Otherwise, always fetch fresh current location
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       setPickupAddress("Permission denied");
@@ -1499,6 +1497,16 @@ export default function Home() {
       currentAddr = `${res[0].name || ""}, ${res[0].street || ""}, ${res[0].city || ""}`;
     }
     setPickupAddress(currentAddr);
+    
+    // ✅ Save current location to AsyncStorage so pickup screen can access it
+    await AsyncStorage.setItem(
+      "pickupDetails",
+      JSON.stringify({
+        address: currentAddr,
+        userSelected: false
+      })
+    );
+    
     setUserSelectedPickup(false);
 
   } catch (e) {
@@ -1516,6 +1524,9 @@ export default function Home() {
     const loadName = async () => {
       try {
         if (params?.userName) {
+          // ✅ User just logged in - clear old pickup to force fresh location fetch
+          await AsyncStorage.removeItem("pickupDetails");
+          
           setDisplayName(params.userName);
           await AsyncStorage.setItem("userName", params.userName);
         } else {
@@ -1533,17 +1544,28 @@ export default function Home() {
 
   useFocusEffect(
   useCallback(() => {
-    // only reload from AsyncStorage, never fetch location
-    const loadFromStorage = async () => {
-      const saved = await AsyncStorage.getItem("pickupDetails");
-      if (saved) {
-        const data = JSON.parse(saved);
-        if (data.userSelected && data.address) {
-          setPickupAddress(data.address);
+    // When focusing on homepage, check AsyncStorage
+    const checkAndLoadPickup = async () => {
+      try {
+        const saved = await AsyncStorage.getItem("pickupDetails");
+        if (saved) {
+          const data = JSON.parse(saved);
+          // Load ANY saved location (user-selected OR current location saved earlier)
+          if (data.address) {
+            setPickupAddress(data.address);
+            setUserSelectedPickup(data.userSelected || false);
+            return; // ✅ Don't refetch
+          }
         }
+        
+        // Only fetch if NO location saved at all
+        await loadPickup();
+      } catch (e) {
+        console.log("Error in useFocusEffect:", e);
       }
     };
-    loadFromStorage();
+    
+    checkAndLoadPickup();
   }, [])
 );
   // When user manually selects a pickup
