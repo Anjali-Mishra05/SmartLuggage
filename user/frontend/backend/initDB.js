@@ -1,6 +1,29 @@
 const db = require("./db");
 
 const initializeDatabase = () => {
+  // Create users table first (for passengers/customers)
+  const usersTable = `
+    CREATE TABLE IF NOT EXISTS users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      phone VARCHAR(20) NOT NULL UNIQUE,
+      email VARCHAR(100),
+      password VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_phone (phone),
+      INDEX idx_email (email)
+    )
+  `;
+
+  db.query(usersTable, (err) => {
+    if (err) {
+      console.error("Error creating users table:", err);
+    } else {
+      console.log("Users table ready ✅");
+    }
+  });
+
   // Create bookings table if it doesn't exist
   const bookingsTable = `
     CREATE TABLE IF NOT EXISTS bookings (
