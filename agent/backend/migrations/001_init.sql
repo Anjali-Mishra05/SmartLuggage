@@ -1,6 +1,14 @@
 -- Smart Luggage Agent backend schema (MySQL 8+)
 
-CREATE TABLE IF NOT EXISTS users (
+-- Drop tables in reverse order of dependencies
+DROP TABLE IF EXISTS booking_luggage_photos;
+DROP TABLE IF EXISTS booking_locations;
+DROP TABLE IF EXISTS bookings;
+DROP TABLE IF EXISTS kyc_files;
+DROP TABLE IF EXISTS kyc;
+DROP TABLE IF EXISTS agents;
+
+CREATE TABLE agents (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   full_name VARCHAR(160) NOT NULL,
   mobile VARCHAR(32) NOT NULL,
@@ -8,10 +16,10 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  UNIQUE KEY uq_users_mobile (mobile)
+  UNIQUE KEY uq_agents_mobile (mobile)
 );
 
-CREATE TABLE IF NOT EXISTS kyc (
+CREATE TABLE kyc (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id BIGINT UNSIGNED NOT NULL,
 
@@ -67,10 +75,10 @@ CREATE TABLE IF NOT EXISTS kyc (
 
   PRIMARY KEY (id),
   UNIQUE KEY uq_kyc_user (user_id),
-  CONSTRAINT fk_kyc_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  CONSTRAINT fk_kyc_agent FOREIGN KEY (user_id) REFERENCES agents(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS kyc_files (
+CREATE TABLE kyc_files (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id BIGINT UNSIGNED NOT NULL,
   kyc_id BIGINT UNSIGNED NOT NULL,
@@ -82,12 +90,12 @@ CREATE TABLE IF NOT EXISTS kyc_files (
   PRIMARY KEY (id),
   KEY idx_kyc_files_user (user_id),
   KEY idx_kyc_files_kyc (kyc_id),
-  CONSTRAINT fk_kyc_files_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_kyc_files_agent FOREIGN KEY (user_id) REFERENCES agents(id) ON DELETE CASCADE,
   CONSTRAINT fk_kyc_files_kyc FOREIGN KEY (kyc_id) REFERENCES kyc(id) ON DELETE CASCADE
 );
 
 -- Bookings table for storing flight and luggage booking details
-CREATE TABLE IF NOT EXISTS bookings (
+CREATE TABLE bookings (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id BIGINT UNSIGNED NOT NULL,
   
@@ -122,11 +130,11 @@ CREATE TABLE IF NOT EXISTS bookings (
   KEY idx_bookings_user (user_id),
   KEY idx_bookings_status (status),
   KEY idx_bookings_created (created_at),
-  CONSTRAINT fk_bookings_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  CONSTRAINT fk_bookings_agent FOREIGN KEY (user_id) REFERENCES agents(id) ON DELETE CASCADE
 );
 
 -- Booking Locations table to store pickup and drop locations with coordinates
-CREATE TABLE IF NOT EXISTS booking_locations (
+CREATE TABLE booking_locations (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   booking_id BIGINT UNSIGNED NOT NULL,
   
@@ -167,7 +175,7 @@ CREATE TABLE IF NOT EXISTS booking_locations (
 );
 
 -- Booking Luggage Photos table
-CREATE TABLE IF NOT EXISTS booking_luggage_photos (
+CREATE TABLE booking_luggage_photos (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   booking_id BIGINT UNSIGNED NOT NULL,
   photo_url VARCHAR(500) NOT NULL,

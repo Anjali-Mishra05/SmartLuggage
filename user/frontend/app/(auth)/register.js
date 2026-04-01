@@ -55,7 +55,7 @@ export default function RegisterScreen() {
                     body: JSON.stringify({
                         name: name.trim(),
                         phone: "+91" + phone,
-                        email: email.trim().toLowerCase(), // Ensures email is sent properly
+                        email: email.trim(),
                         password: password
                     })
                 });

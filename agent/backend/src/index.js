@@ -70,12 +70,12 @@ app.post("/api/auth/signup", async (req, res) => {
   const { fullName, mobile, password } = parsed.data;
   const pool = getPool();
 
-  const [existing] = await pool.query("SELECT id FROM users WHERE mobile = ? LIMIT 1", [mobile]);
+  const [existing] = await pool.query("SELECT id FROM agents WHERE mobile = ? LIMIT 1", [mobile]);
   if (existing.length) return res.status(409).json({ error: "Mobile already registered" });
 
   const passwordHash = await bcrypt.hash(password, 10);
   const [result] = await pool.query(
-    "INSERT INTO users (full_name, mobile, password_hash) VALUES (?, ?, ?)",
+    "INSERT INTO agents (full_name, mobile, password_hash) VALUES (?, ?, ?)",
     [fullName, mobile, passwordHash]
   );
 
@@ -90,7 +90,7 @@ app.post("/api/auth/login", async (req, res) => {
 
   const { mobile, password } = parsed.data;
   const pool = getPool();
-  const [rows] = await pool.query("SELECT id, full_name, mobile, password_hash FROM users WHERE mobile = ? LIMIT 1", [mobile]);
+  const [rows] = await pool.query("SELECT id, full_name, mobile, password_hash FROM agents WHERE mobile = ? LIMIT 1", [mobile]);
   if (!rows.length) return res.status(401).json({ error: "Invalid credentials" });
 
   const user = rows[0];
@@ -103,7 +103,7 @@ app.post("/api/auth/login", async (req, res) => {
 
 app.get("/api/me", requireAuth, async (req, res) => {
   const pool = getPool();
-  const [rows] = await pool.query("SELECT id, full_name, mobile, created_at FROM users WHERE id = ? LIMIT 1", [req.user.id]);
+  const [rows] = await pool.query("SELECT id, full_name, mobile, created_at FROM agents WHERE id = ? LIMIT 1", [req.user.id]);
   if (!rows.length) return res.status(404).json({ error: "User not found" });
   return res.json({ user: rows[0] });
 });
@@ -239,7 +239,7 @@ app.use((err, _req, res, _next) => {
   return res.status(500).json({ error: "Server error" });
 });
 
-app.listen(PORT, async () => {
+app.listen(PORT, '0.0.0.0', async () => {
   // eslint-disable-next-line no-console
   console.log(`API running on http://localhost:${PORT}`);
   await testConnection();
