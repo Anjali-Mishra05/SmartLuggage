@@ -11,8 +11,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 1. Double check your IPv4 address using 'ipconfig'
 // 2. Ensure port is 5000 (from your server.js)
-const IP_ADDRESS = "10.27.133.52"; 
-const API_URL = "http://10.27.133.52:5000/api/auth/user-profile";
+const IP_ADDRESS = "192.168.0.127"; 
+const API_URL = "http://192.168.0.127:5000/api/auth/user-profile";
 
 const ProfileOption = ({ icon, title, color, onPress }) => (
   <TouchableOpacity style={styles.optionRow} onPress={onPress}>
@@ -134,7 +134,7 @@ export default function Profile() {
         <View style={styles.listContainer}>
           <Text style={styles.sectionLabel}>ACCOUNT</Text>
           <View style={styles.cardGroup}>
-            <ProfileOption icon="account-edit" title="Edit Profile" color="#4F46E5" onPress={() => {}} />
+            <ProfileOption icon="account-edit" title="Edit Profile" color="#4F46E5" onPress={() => router.push('/editprofile')} />
             <View style={styles.divider} />
             <ProfileOption icon="map-marker" title="Saved Address" color="#10B981" onPress={() => {}} />
           </View>
@@ -183,5 +183,5 @@ const styles = StyleSheet.create({
   optionText: { flex: 1, fontSize: 16, fontWeight: '600', color: '#334155' },
   divider: { height: 1, backgroundColor: '#F1F5F9', marginLeft: 60 },
   logoutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFF', paddingVertical: 18, borderRadius: 22, borderWidth: 1, borderColor: '#FEE2E2', marginTop: 10, elevation: 2 },
-  logoutLabel: { fontSize: 17, fontWeight: '700', color: '#FF4B2B', marginLeft: 12 },
+  logoutLabel: { fontSize: 17, fontWeight: '700', color: '#ff6600', marginLeft: 12 },
 });

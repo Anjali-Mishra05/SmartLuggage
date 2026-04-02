@@ -1,77 +1,106 @@
 const db = require("./db");
 
-const initializeDatabase = () => {
-  // Create users table first (for passengers/customers)
-  const usersTable = `
-    CREATE TABLE IF NOT EXISTS users (
+const initializeDatabase = (callback) => {
+  const queries = [
+    // 1. Create Users Table if not exists (preserves existing data)
+    `CREATE TABLE IF NOT EXISTS users (
       id INT AUTO_INCREMENT PRIMARY KEY,
       name VARCHAR(100) NOT NULL,
       phone VARCHAR(20) NOT NULL UNIQUE,
       email VARCHAR(100),
       password VARCHAR(255),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      INDEX idx_phone (phone),
-      INDEX idx_email (email)
-    )
-  `;
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
 
-  db.query(usersTable, (err) => {
-    if (err) {
-      console.error("Error creating users table:", err);
-    } else {
-      console.log("Users table ready ✅");
-    }
-  });
-
-  // Create bookings table if it doesn't exist
-  const bookingsTable = `
-    CREATE TABLE IF NOT EXISTS bookings (
+    // 2. Create Bookings Table if not exists (preserves existing data)
+    `CREATE TABLE IF NOT EXISTS bookings (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      phone VARCHAR(20) NOT NULL,
+      phone VARCHAR(20),
       username VARCHAR(100),
-      is_international BOOLEAN DEFAULT FALSE,
-      is_domestic BOOLEAN DEFAULT TRUE,
+      is_international TINYINT DEFAULT 0,
+      is_domestic TINYINT DEFAULT 0,
       airline_name VARCHAR(100),
       flight_number VARCHAR(50),
       terminal VARCHAR(50),
-      departure_airport VARCHAR(50),
-      arrival_airport VARCHAR(50),
-      departure_date DATE,
-      departure_time TIME,
-      arrival_date DATE,
-      arrival_time TIME,
-      bag_count INT,
-      bag_weight FLOAT,
-      is_fragile BOOLEAN DEFAULT FALSE,
-      is_checkin BOOLEAN DEFAULT FALSE,
-      pincode INT,
+      departure_city VARCHAR(100),
+      departure_airport VARCHAR(255),
+      arrival_city VARCHAR(100),
+      arrival_airport VARCHAR(255),
+      departure_date VARCHAR(20),
+      departure_time VARCHAR(20),
+      bag_count INT DEFAULT 1,
+      bag_weight VARCHAR(20),
+      is_fragile TINYINT DEFAULT 0,
+      is_checkin TINYINT DEFAULT 0,
+      pincode VARCHAR(10),
       pickup_address TEXT,
-      pickup_latitude DECIMAL(10, 8),
-      pickup_longitude DECIMAL(11, 8),
-      pickup_time TIME,
-      drop_address TEXT,
-      drop_latitude DECIMAL(10, 8),
-      drop_longitude DECIMAL(11, 8),
-      photos JSON,
+      pickup_latitude FLOAT,
+      pickup_longitude FLOAT,
+      pickup_time VARCHAR(20),
+      photos LONGTEXT,
       additional_info TEXT,
       status VARCHAR(20) DEFAULT 'pending',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      FOREIGN KEY (phone) REFERENCES users(phone),
-      INDEX idx_phone (phone),
-      INDEX idx_status (status),
-      INDEX idx_created_at (created_at)
-    )
-  `;
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
 
-  db.query(bookingsTable, (err) => {
-    if (err) {
-      console.error("Error creating bookings table:", err);
-    } else {
-      console.log("Bookings table ready ✅");
+    // 3. Create Booking Locations Table if not exists (preserves existing data)
+    `CREATE TABLE IF NOT EXISTS booking_locations (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      booking_id INT NOT NULL,
+      location_type VARCHAR(50),
+      address TEXT,
+      latitude FLOAT,
+      longitude FLOAT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    // 4. Create Luggage Photos Table if not exists (preserves existing data)
+    `CREATE TABLE IF NOT EXISTS luggage_photos (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      booking_id INT NOT NULL,
+      photo_url VARCHAR(500),
+      uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
+  ];
+
+  let queryIndex = 0;
+
+  const executeNextQuery = () => {
+    if (queryIndex >= queries.length) {
+      console.log("------------------------------------");
+      console.log("✅ Database initialization complete");
+      console.log("------------------------------------");
+      if (callback) callback(); // Signal completion
+      return;
     }
-  });
+
+    const query = queries[queryIndex];
+    queryIndex++;
+
+    db.query(query, (err) => {
+      if (err) {
+        // Always show CREATE TABLE errors
+        if (query.includes('CREATE TABLE')) {
+          console.error(`❌ Error creating table:`, err.message);
+        } else {
+          // Suppress non-critical errors for other queries
+          const suppressed = ['ER_TABLE_EXISTS_ERROR', 'ER_BAD_TABLE_ERROR', 'ER_CANNOT_ADD_FOREIGN', 'ER_FK_COLUMN_CANNOT_DROP'];
+          if (!suppressed.includes(err.code)) {
+            console.error(`❌ Error in query:`, err.message);
+          }
+        }
+      } else {
+        if (query.includes('CREATE TABLE users')) console.log("✅ Users table created");
+        if (query.includes('CREATE TABLE bookings')) console.log("✅ Bookings table created");
+        if (query.includes('CREATE TABLE booking_locations')) console.log("✅ Booking Locations table created");
+        if (query.includes('CREATE TABLE luggage_photos')) console.log("✅ Luggage Photos table created");
+        if (query.includes('DROP TABLE')) console.log(`✅ Cleaned up old tables`);
+      }
+      executeNextQuery();
+    });
+  };
+
+  executeNextQuery();
 };
 
 module.exports = initializeDatabase;

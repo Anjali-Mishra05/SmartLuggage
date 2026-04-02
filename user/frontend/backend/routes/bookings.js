@@ -24,37 +24,70 @@ const verifyToken = (req, res, next) => {
 // Create booking
 router.post("/create", verifyToken, (req, res) => {
   const {
-    username, isInternational, isDomestic, airlineName, flightNumber, terminal,
-    departureAirport, arrivalAirport, departureDate, departureTime,
-    arrivalDate, arrivalTime, bagCount, bagWeight, isFragile, isCheckin,
-    pincode, pickupAddress, pickupLatitude, pickupLongitude, pickupTime,
-    dropAddress, dropLatitude, dropLongitude, photos, additionalInfo
+    username,
+    isInternational, 
+    isDomestic, 
+    airlineName, 
+    flightNumber, 
+    terminal,
+    departureCity,
+    departureAirport, 
+    arrivalCity,
+    arrivalAirport,
+    departureDate, 
+    departureTime,
+    bagCount, 
+    bagWeight, 
+    isFragile, 
+    isCheckin,
+    pincode, 
+    pickupAddress, 
+    pickupLatitude, 
+    pickupLongitude, 
+    pickupTime,
+    photos, 
+    additionalInfo
   } = req.body;
 
   try {
     const query = `
       INSERT INTO bookings (
         phone, username, is_international, is_domestic, airline_name, flight_number, terminal,
-        departure_airport, arrival_airport, departure_date, departure_time,
-        arrival_date, arrival_time, bag_count, bag_weight, is_fragile,
+        departure_city, departure_airport, arrival_city, arrival_airport, departure_date, departure_time,
+        bag_count, bag_weight, is_fragile,
         is_checkin, pincode, pickup_address, pickup_latitude, pickup_longitude, pickup_time,
-        drop_address, drop_latitude, drop_longitude, photos, additional_info, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        photos, additional_info, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-
-    // Safely handle nullable numeric fields
-    const safeDropLat = dropLatitude && dropLatitude !== 0 ? dropLatitude : null;
-    const safeDropLon = dropLongitude && dropLongitude !== 0 ? dropLongitude : null;
 
     db.query(
       query,
       [
-        req.phone, username, isInternational ? 1 : 0, isDomestic !== false ? 1 : 0, airlineName, flightNumber, terminal,
-        departureAirport, arrivalAirport, departureDate, departureTime,
-        arrivalDate, arrivalTime, bagCount || 1, bagWeight, isFragile ? 1 : 0,
-        isCheckin ? 1 : 0, pincode, pickupAddress, pickupLatitude, pickupLongitude, pickupTime,
-        dropAddress, safeDropLat, safeDropLon,
-        photos ? JSON.stringify(photos) : null, additionalInfo, 'pending'
+        req.phone,
+        username,
+        isInternational ? 1 : 0, 
+        isDomestic !== false ? 1 : 0, 
+        airlineName, 
+        flightNumber, 
+        terminal,
+        departureCity,
+        departureAirport,
+        arrivalCity,
+        arrivalAirport,
+        departureDate, 
+        departureTime,
+        bagCount || 1, 
+        bagWeight, 
+        isFragile ? 1 : 0,
+        isCheckin ? 1 : 0, 
+        pincode, 
+        pickupAddress, 
+        pickupLatitude, 
+        pickupLongitude, 
+        pickupTime,
+        photos ? JSON.stringify(photos) : null, 
+        additionalInfo, 
+        'pending'
       ],
       (err, result) => {
         if (err) {

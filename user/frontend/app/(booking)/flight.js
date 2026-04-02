@@ -27,12 +27,10 @@ export default function FlightDetails() {
   const [flightNo, setFlightNo] = useState(''); 
   const [terminal, setTerminal] = useState('T2');
   const [depCity, setDepCity] = useState(null);
-  const [arrCity, setArrCity] = useState(null);
+  const [arrCity, setArrCity] = useState(null); 
   
   const [depDate, setDepDate] = useState(new Date());
-  const [arrDate, setArrDate] = useState(new Date());
   const [depTime, setDepTime] = useState(new Date());
-  const [arrTime, setArrTime] = useState(new Date());
   const [showPicker, setShowPicker] = useState(null);
 
   const [searchVisible, setSearchVisible] = useState(false);
@@ -100,8 +98,6 @@ export default function FlightDetails() {
             arrAirport: arrCity.name,
             depDate: depDate.toLocaleDateString('en-GB'),
             depTime: depTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true}),
-            arrDate: arrDate.toLocaleDateString('en-GB'),
-            arrTime: arrTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})
         } 
     });
   };
@@ -110,20 +106,14 @@ export default function FlightDetails() {
     if (Platform.OS === 'android') setShowPicker(null);
     if (selectedValue) {
         if (showPicker === 'depDate') setDepDate(selectedValue);
-        if (showPicker === 'arrDate') setArrDate(selectedValue);
         if (showPicker === 'depTime') setDepTime(selectedValue);
-        if (showPicker === 'arrTime') setArrTime(selectedValue);
     }
   };
 
   const filteredData = () => {
     const query = searchText.toLowerCase().trim();
     if (searchType === 'airline') {
-      const majorAirlines = [
-        "Air India", "Air India Express", "Air Asia", "Akasa Air", 
-        "Alliance Air", "GoFirst", "IndiGo", "SpiceJet", 
-        "Star Air", "Vistara"
-      ];
+      const majorAirlines = ["Air India", "Air India Express", "Air Asia", "Akasa Air", "Alliance Air", "GoFirst", "IndiGo", "SpiceJet", "Star Air", "Vistara"];
       if (!query) return majorAirlines.map(name => ({ name, isIndian: true }));
       return airlinesData
         .filter(a => a.name?.toLowerCase().includes(query))
@@ -184,16 +174,15 @@ export default function FlightDetails() {
 
       <SafeAreaView style={{ backgroundColor: '#FFF' }}>
         <View style={styles.header}>
-           <TouchableOpacity onPress={() => router.back()}>
-             <MaterialCommunityIcons name="arrow-left" size={24} color="#1A1C1E" />
-           </TouchableOpacity>
-           <Text style={styles.title}>Flight Details</Text>
-           <View style={{width: 24}} /> 
+            <TouchableOpacity onPress={() => router.back()}>
+              <MaterialCommunityIcons name="arrow-left" size={24} color="#1A1C1E" />
+            </TouchableOpacity>
+            <Text style={styles.title}>Flight Details</Text>
+            <View style={{width: 24}} /> 
         </View>
       </SafeAreaView>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-
         <View style={styles.stepContainer}>
             <View style={styles.stepItem}>
                 <View style={[styles.stepCircle, styles.activeStep]}><Text style={styles.stepTextActive}>1</Text></View>
@@ -254,7 +243,7 @@ export default function FlightDetails() {
 
         <Text style={styles.inputLabel}>Departure City</Text>
         <TouchableOpacity style={styles.cityCard} onPress={() => {setSearchType('dep'); setSearchText(''); setSearchVisible(true);}}>
-            <View style={styles.iconCircle}><MaterialCommunityIcons name="map-marker" size={20} color="#FF4B2B" /></View>
+            <View style={styles.iconCircle}><MaterialCommunityIcons name="map-marker-right" size={20} color="#FF4B2B" /></View>
             <View style={styles.cityInfo}>
                 <Text style={styles.cityName}>{depCity ? `${depCity.city} (${depCity.iata})` : "Select Departure"}</Text>
                 <Text style={styles.airportName}>{depCity ? depCity.name : "Choose departure airport"}</Text>
@@ -278,7 +267,7 @@ export default function FlightDetails() {
 
         <Text style={styles.inputLabel}>Arrival City</Text>
         <TouchableOpacity style={styles.cityCard} onPress={() => {setSearchType('arr'); setSearchText(''); setSearchVisible(true);}}>
-            <View style={styles.iconCircle}><MaterialCommunityIcons name="airplane-landing" size={20} color="#FF4B2B" /></View>
+            <View style={styles.iconCircle}><MaterialCommunityIcons name="map-marker-check" size={20} color="#FF4B2B" /></View>
             <View style={styles.cityInfo}>
                 <Text style={styles.cityName}>{arrCity ? `${arrCity.city} (${arrCity.iata})` : "Select Arrival"}</Text>
                 <Text style={styles.airportName}>{arrCity ? arrCity.name : "Choose destination airport"}</Text>
@@ -294,18 +283,6 @@ export default function FlightDetails() {
             <TouchableOpacity style={styles.timeBox} onPress={() => setShowPicker('depTime')}>
               <MaterialCommunityIcons name="clock-outline" size={18} color="#FF4B2B" />
               <Text style={styles.dateTimeValText}>{depTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12: true})}</Text>
-            </TouchableOpacity>
-        </View>
-
-        <Text style={styles.inputLabel}>Arrival Date and Time</Text>
-        <View style={styles.sideBySideRow}>
-            <TouchableOpacity style={styles.dateBox} onPress={() => setShowPicker('arrDate')}>
-              <MaterialCommunityIcons name="calendar-month" size={18} color="#FF4B2B" />
-              <Text style={styles.dateTimeValText}>{arrDate.toLocaleDateString('en-GB')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.timeBox} onPress={() => setShowPicker('arrTime')}>
-              <MaterialCommunityIcons name="clock-outline" size={18} color="#FF4B2B" />
-              <Text style={styles.dateTimeValText}>{arrTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12: true})}</Text>
             </TouchableOpacity>
         </View>
 
@@ -347,7 +324,7 @@ export default function FlightDetails() {
                 <TouchableOpacity style={styles.resItem} onPress={() => { 
                     if (searchType === 'airline') setAirline(item);
                     else if (searchType === 'dep') setDepCity(item);
-                    else setArrCity(item);
+                    else if (searchType === 'arr') setArrCity(item);
                     setSearchVisible(false); 
                     setSearchText('');
                 }}>
@@ -375,11 +352,11 @@ const styles = StyleSheet.create({
   pinIconCircle: { width: 90, height: 90, borderRadius: 45, backgroundColor: '#FFF5F3', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
   pinTitle: { fontSize: 22, fontWeight: '800', color: '#1A1A1A' },
   pinSub: { fontSize: 13, color: '#7D848D', textAlign: 'center', marginVertical: 15, lineHeight: 18 },
-  pinInput: { width: '100%', height: 60, backgroundColor: '#F5F7FA', borderRadius: 15, textAlign: 'center', fontSize: 26, fontWeight: '700', color: '#FF4B2B', marginBottom: 25 },
+  pinInput: { width: '100%', height: 60, backgroundColor: '#F5F7FA', borderRadius: 15, textAlign: 'center', fontSize: 26, fontWeight: '700', color: '#FF4B2B', marginBottom: 20 },
   pinBtn: { width: '100%', borderRadius: 15, overflow: 'hidden' },
   pinGradient: { paddingVertical: 18, alignItems: 'center' },
   pinBtnText: { color: '#FFF', fontWeight: '800', fontSize: 16 },
-  pinCancelBtn: { marginTop: 20, padding: 10 },
+  pinCancelBtn: { marginTop: 12, padding: 10 },
   pinCancelText: { color: '#999', fontWeight: '700', fontSize: 14 },
   stepContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 30 },
   stepItem: { alignItems: 'center' },

@@ -1678,7 +1678,7 @@ export default function Home() {
               </Text>
               
               <View style={styles.bookNowBtn}>
-                <LinearGradient colors={['#FF4B2B', '#FF8C00']} style={styles.btnGradient}>
+                <LinearGradient colors={['#ff6600', '#ff6600']} style={styles.btnGradient}>
                   <Text style={styles.btnText}>Book Now</Text>
                   <Feather name="arrow-right" size={18} color="#FFF" />
                 </LinearGradient>
@@ -1867,7 +1867,7 @@ const styles = StyleSheet.create({
 
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 25, marginBottom: 15 },
   sectionTitle: { fontSize: 18, fontWeight: '800', color: '#1A1C1E' },
-  viewAll: { fontSize: 14, color: '#FF3B30', fontWeight: '700' },
+  viewAll: { fontSize: 14, color: '#ff6600', fontWeight: '700' },
 
   activeCard: { backgroundColor: '#FFF', borderRadius: 24, padding: 20, elevation: 2 },
   cardTop: { flexDirection: 'row', alignItems: 'center' },

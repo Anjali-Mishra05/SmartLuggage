@@ -15,9 +15,6 @@ const host = '0.0.0.0';
 app.use(cors());
 app.use(bodyParser.json());
 
-// Initialize database tables
-initializeDatabase();
-
 // Debug Logger
 app.use((req, res, next) => {
     console.log(`DEBUG: ${req.method} request to ${req.url}`);
@@ -37,8 +34,10 @@ app.use((err, req, res, next) => {
     res.status(500).json({ success: false, message: "Internal server error" });
 });
 
-// Start server listening on 0.0.0.0
-app.listen(port, host, () => {
+// Initialize database and start server only after DB is ready
+initializeDatabase(() => {
+  app.listen(port, host, () => {
     console.log(`Server running on http://${host}:${port}`);
-    console.log("DB Connected");
+    console.log("✅ Server ready to accept requests");
+  });
 });

@@ -175,4 +175,74 @@ router.get("/user-profile", (req, res) => {
         }
     });
 });
+// ---------------------------------------------------------
+// GET USER PROFILE (Includes Password for the Eye Icon)
+// ---------------------------------------------------------
+router.get("/user-profile", (req, res) => {
+    const phone = req.query.phone;
+    if (!phone) {
+        return res.status(400).json({ success: false, message: "Phone number is required" });
+    }
+
+    // CRITICAL: We select 'password' so the eye icon has data to reveal
+    const query = "SELECT name, phone, email, password FROM users WHERE phone = ? LIMIT 1";
+    
+    db.query(query, [phone], (err, results) => {
+        if (err) {
+            console.error("Fetch Error:", err);
+            return res.status(500).json({ success: false, message: "Database Error" });
+        }
+        
+        if (results.length > 0) {
+            const user = results[0];
+            res.json({
+                success: true,
+                name: user.name,
+                phone: user.phone,
+                email: user.email || "Not provided",
+                password: user.password // Sent to frontend
+            });
+        } else {
+            res.json({ success: false, message: "User not found" });
+        }
+    });
+});
+
+// ---------------------------------------------------------
+// UPDATE USER PROFILE
+// ---------------------------------------------------------
+router.put("/update-profile", (req, res) => {
+    const { name, email, phone, password, originalPhone } = req.body;
+
+    if (!name || !phone || !originalPhone) {
+        return res.status(400).json({ success: false, message: "Missing required fields." });
+    }
+
+    const executeUpdate = () => {
+        let updateQuery;
+        let queryParams;
+
+        if (password && password.trim() !== "") {
+            updateQuery = "UPDATE users SET name = ?, email = ?, phone = ?, password = ? WHERE phone = ?";
+            queryParams = [name, email, phone, password, originalPhone];
+        } else {
+            updateQuery = "UPDATE users SET name = ?, email = ?, phone = ? WHERE phone = ?";
+            queryParams = [name, email, phone, originalPhone];
+        }
+
+        db.query(updateQuery, queryParams, (err, result) => {
+            if (err) return res.json({ success: false, message: "Database update failed." });
+            res.json({ success: true, message: "Profile updated successfully!" });
+        });
+    };
+
+    if (phone !== originalPhone) {
+        db.query("SELECT * FROM users WHERE phone = ?", [phone], (err, results) => {
+            if (results.length > 0) return res.json({ success: false, message: "Phone already in use." });
+            executeUpdate();
+        });
+    } else {
+        executeUpdate();
+    }
+});
 module.exports = router;

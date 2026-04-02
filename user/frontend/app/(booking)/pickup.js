@@ -284,7 +284,7 @@
 //   confirmBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' }
 // });
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, TouchableOpacity, 
   TextInput, SafeAreaView, Platform, StatusBar
@@ -301,10 +301,35 @@ export default function PickupDetails() {
   const params = useLocalSearchParams(); 
   
   const [pincode, setPincode] = useState('');
-  const [pickupAddress, setPickupAddress] = useState(''); // Initially empty
+  const [pickupAddress, setPickupAddress] = useState(''); 
   const [pickupTime, setPickupTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [additionalInfo, setAdditionalInfo] = useState('');
+
+  // ✅ NEW: Calculate default pickup time based on Departure Time
+  useEffect(() => {
+    if (params.depTime) {
+      try {
+        // Parse the departure time string (expected format from previous screen: "HH:mm AM/PM")
+        const [time, modifier] = params.depTime.split(' ');
+        let [hours, minutes] = time.split(':');
+        hours = parseInt(hours, 10);
+        minutes = parseInt(minutes, 10);
+
+        if (modifier === 'PM' && hours < 12) hours += 12;
+        if (modifier === 'AM' && hours === 12) hours = 0;
+
+        const date = new Date();
+        date.setHours(hours, minutes, 0, 0);
+
+        // Subtract 4 hours for the estimated pickup
+        date.setHours(date.getHours() - 4);
+        setPickupTime(date);
+      } catch (e) {
+        console.log("Error calculating estimated pickup time:", e);
+      }
+    }
+  }, [params.depTime]);
 
   // ✅ Load pickup address from homepage/AsyncStorage
   useFocusEffect(
@@ -313,7 +338,6 @@ export default function PickupDetails() {
 
       const loadPickup = async () => {
         try {
-          // First, check if there's a pickupDetails object with address
           const saved = await AsyncStorage.getItem("pickupDetails");
           if (saved && isActive) {
             const data = JSON.parse(saved);
@@ -322,7 +346,6 @@ export default function PickupDetails() {
             }
           }
           
-          // Also check for a stored location from homepage
           const storedLocation = await AsyncStorage.getItem("homepageLocation");
           if (storedLocation && isActive) {
             setPickupAddress(storedLocation);
@@ -495,7 +518,6 @@ export default function PickupDetails() {
   );
 }
 
-// ✅ STYLES (UNCHANGED)
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   header: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 10, paddingBottom: 15, alignItems: 'center' },

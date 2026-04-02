@@ -68,6 +68,13 @@ export default function TabLayout() {
           href: null, 
         }}
       />
+      {/* ADD THIS TO HIDE THE EDIT PROFILE TAB */}
+    <Tabs.Screen
+      name="editprofile"
+      options={{
+        href: null, // This removes it from the bottom bar
+     }}
+    />
     </Tabs>
   );
 }
