@@ -2,7 +2,7 @@ const db = require("./db");
 
 const initializeDatabase = (callback) => {
   const queries = [
-    // 1. Create Users Table if not exists (preserves existing data)
+    // 1. Create Users Table if not exists
     `CREATE TABLE IF NOT EXISTS users (
       id INT AUTO_INCREMENT PRIMARY KEY,
       name VARCHAR(100) NOT NULL,
@@ -12,7 +12,7 @@ const initializeDatabase = (callback) => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
-    // 2. Create Bookings Table if not exists (preserves existing data)
+    // 2. Create Bookings Table with all required columns
     `CREATE TABLE IF NOT EXISTS bookings (
       id INT AUTO_INCREMENT PRIMARY KEY,
       phone VARCHAR(20),
@@ -24,8 +24,6 @@ const initializeDatabase = (callback) => {
       terminal VARCHAR(50),
       departure_city VARCHAR(100),
       departure_airport VARCHAR(255),
-      arrival_city VARCHAR(100),
-      arrival_airport VARCHAR(255),
       departure_date VARCHAR(20),
       departure_time VARCHAR(20),
       bag_count INT DEFAULT 1,
@@ -37,13 +35,16 @@ const initializeDatabase = (callback) => {
       pickup_latitude FLOAT,
       pickup_longitude FLOAT,
       pickup_time VARCHAR(20),
+      drop_address TEXT,
+      drop_latitude FLOAT,
+      drop_longitude FLOAT,
       photos LONGTEXT,
       additional_info TEXT,
       status VARCHAR(20) DEFAULT 'pending',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
-    // 3. Create Booking Locations Table if not exists (preserves existing data)
+    // 3. Create Booking Locations Table if not exists
     `CREATE TABLE IF NOT EXISTS booking_locations (
       id INT AUTO_INCREMENT PRIMARY KEY,
       booking_id INT NOT NULL,
@@ -54,7 +55,7 @@ const initializeDatabase = (callback) => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
-    // 4. Create Luggage Photos Table if not exists (preserves existing data)
+    // 4. Create Luggage Photos Table if not exists
     `CREATE TABLE IF NOT EXISTS luggage_photos (
       id INT AUTO_INCREMENT PRIMARY KEY,
       booking_id INT NOT NULL,

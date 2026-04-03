@@ -32,8 +32,6 @@ router.post("/create", verifyToken, (req, res) => {
     terminal,
     departureCity,
     departureAirport, 
-    arrivalCity,
-    arrivalAirport,
     departureDate, 
     departureTime,
     bagCount, 
@@ -45,19 +43,29 @@ router.post("/create", verifyToken, (req, res) => {
     pickupLatitude, 
     pickupLongitude, 
     pickupTime,
+    dropAddress,
+    dropLatitude,
+    dropLongitude,
     photos, 
     additionalInfo
   } = req.body;
 
   try {
+    console.log("Received booking request with drop location:", {
+      dropAddress,
+      dropLatitude,
+      dropLongitude
+    });
+
     const query = `
       INSERT INTO bookings (
         phone, username, is_international, is_domestic, airline_name, flight_number, terminal,
-        departure_city, departure_airport, arrival_city, arrival_airport, departure_date, departure_time,
-        bag_count, bag_weight, is_fragile,
-        is_checkin, pincode, pickup_address, pickup_latitude, pickup_longitude, pickup_time,
+        departure_city, departure_airport, departure_date, departure_time,
+        bag_count, bag_weight, is_fragile, is_checkin, pincode, 
+        pickup_address, pickup_latitude, pickup_longitude, pickup_time,
+        drop_address, drop_latitude, drop_longitude,
         photos, additional_info, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     db.query(
@@ -72,8 +80,6 @@ router.post("/create", verifyToken, (req, res) => {
         terminal,
         departureCity,
         departureAirport,
-        arrivalCity,
-        arrivalAirport,
         departureDate, 
         departureTime,
         bagCount || 1, 
@@ -85,6 +91,9 @@ router.post("/create", verifyToken, (req, res) => {
         pickupLatitude, 
         pickupLongitude, 
         pickupTime,
+        dropAddress,
+        dropLatitude,
+        dropLongitude,
         photos ? JSON.stringify(photos) : null, 
         additionalInfo, 
         'pending'

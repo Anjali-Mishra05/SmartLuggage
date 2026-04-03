@@ -18,6 +18,7 @@ export default function LuggageDetails() {
   const [photos, setPhotos] = useState([]);
   const [checkinSelected, setCheckinSelected] = useState(false); 
   const [fragile, setFragile] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // UPDATED LOGIC: Supports Multiple Gallery Selection & Continuous Camera
   const pickImage = async (useCamera = true, indexToReplace = null) => {
@@ -228,20 +229,31 @@ export default function LuggageDetails() {
         {/* Continue Button */}
         <TouchableOpacity 
           style={styles.nextBtn} 
-          onPress={() => {
-            const dropLocation = createDropLocation(flightParams.depAirport, flightParams.terminal);
-            router.push({
-              pathname: '/(booking)/pickup', 
-              params: {
-                ...flightParams, 
-                bags: bagCount,
-                weight: selectedWeight,
-                fragile: fragile,
-                checkin: checkinSelected,
-                dropLocation: dropLocation.address,
-                photos: JSON.stringify(photos) 
-              }
-            });
+          disabled={isLoading}
+          onPress={async () => {
+            setIsLoading(true);
+            try {
+              const dropLocation = await createDropLocation(flightParams.depAirport, flightParams.terminal);
+              router.push({
+                pathname: '/(booking)/pickup', 
+                params: {
+                  ...flightParams, 
+                  bags: bagCount,
+                  weight: selectedWeight,
+                  fragile: fragile,
+                  checkin: checkinSelected,
+                  dropLocation: dropLocation.address,
+                  dropLatitude: dropLocation.latitude.toString(),
+                  dropLongitude: dropLocation.longitude.toString(),
+                  photos: JSON.stringify(photos) 
+                }
+              });
+            } catch (error) {
+              console.error('Error fetching drop location:', error);
+              Alert.alert('Error', 'Failed to fetch drop location. Please try again.');
+            } finally {
+              setIsLoading(false);
+            }
           }}
         >
           <LinearGradient 
@@ -250,7 +262,7 @@ export default function LuggageDetails() {
             end={{x:1, y:0}} 
             style={styles.gradient}
           >
-            <Text style={styles.nextBtnText}>Continue to Pickup Details</Text>
+            <Text style={styles.nextBtnText}>{isLoading ? 'Fetching location...' : 'Continue to Pickup Details'}</Text>
           </LinearGradient>
         </TouchableOpacity>
 

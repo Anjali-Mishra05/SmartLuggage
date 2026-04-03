@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.127:5000';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://172.30.233.52:5000';
 
 // Convert DD/MM/YYYY to YYYY-MM-DD format for MySQL
 const convertDateToMySQLFormat = (dateStr) => {
@@ -47,16 +47,12 @@ const convertTimeToMySQLFormat = (timeStr) => {
   }
 };
 
-// Extract numeric weight from "10-20 kg" format
+// Keep full weight range from "10-20 kg" format
 const extractBagWeight = (weightStr) => {
   if (!weightStr) return null;
   try {
-    // Extract first number from the string
-    const match = weightStr.match(/\d+/);
-    if (match) {
-      return parseFloat(match[0]);
-    }
-    return null;
+    // Return the full weight string as-is (e.g., "10-20 kg")
+    return weightStr;
   } catch (e) {
     console.error('Weight conversion error:', e);
     return weightStr;
@@ -90,9 +86,7 @@ export const createBooking = async (bookingData) => {
     const convertedData = {
       ...bookingData,
       departureDate: convertDateToMySQLFormat(bookingData.departureDate),
-      arrivalDate: convertDateToMySQLFormat(bookingData.arrivalDate),
       departureTime: convertTimeToMySQLFormat(bookingData.departureTime),
-      arrivalTime: convertTimeToMySQLFormat(bookingData.arrivalTime),
       pickupTime: convertTimeToMySQLFormat(bookingData.pickupTime),
       bagWeight: extractBagWeight(bookingData.bagWeight),
       pincode: convertPincode(bookingData.pincode),
@@ -100,6 +94,11 @@ export const createBooking = async (bookingData) => {
 
     console.log('DEBUG: Making API call to:', `${API_BASE_URL}/api/bookings/create`);
     console.log('DEBUG: Converted booking data:', convertedData);
+    console.log('DEBUG: Drop location coordinates:', {
+      dropAddress: convertedData.dropAddress,
+      dropLatitude: convertedData.dropLatitude,
+      dropLongitude: convertedData.dropLongitude
+    });
     
     const response = await fetch(`${API_BASE_URL}/api/bookings/create`, {
       method: 'POST',

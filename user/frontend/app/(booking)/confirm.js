@@ -8,7 +8,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createBooking } from '../utils/bookingService';
-import { useState } from 'react';
+import { calculatePrice, calculateDistance } from '../utils/pricingCalculator';
+import { useState, useMemo } from 'react';
+import * as Location from 'expo-location';
 
 export default function BookingSummary() {
   const router = useRouter();
@@ -21,14 +23,10 @@ export default function BookingSummary() {
     airline = "Not selected", 
     flightNo = "N/A", 
     depCity = "", 
-    arrCity = "",
     depTime = "",
     depDate = "",
-    arrDate = "",
-    arrTime = "",
     terminal = "T2",
     depAirport = "",
-    arrAirport = "",
     isInternational = "false",
     
     // From luggage.js
@@ -37,14 +35,91 @@ export default function BookingSummary() {
     checkin = false,
     fragile = false,
     dropLocation = "Not available",
+    dropLatitude = "",
+    dropLongitude = "",
     photos = "[]",
 
     // From pickup.js
     pickupAddress = "Not provided", 
     pickupTime = "",
     pincode = "",
-    additionalInfo = ""
+    additionalInfo = "",
+    pickupLatitude = "",
+    pickupLongitude = ""
   } = params;
+
+  // Calculate price and distance dynamically
+  const { calculatedPrice, distance } = useMemo(() => {
+    try {
+      // Parse coordinates
+      const pLat = parseFloat(pickupLatitude);
+      const pLon = parseFloat(pickupLongitude);
+      const dLat = parseFloat(dropLatitude);
+      const dLon = parseFloat(dropLongitude);
+
+      // Calculate distance if we have valid coordinates
+      let dist = 0;
+      if (!isNaN(pLat) && !isNaN(pLon) && !isNaN(dLat) && !isNaN(dLon)) {
+        dist = calculateDistance(pLat, pLon, dLat, dLon);
+      }
+
+      // Parse bag count (convert to number)
+      const bagCount = parseInt(bags) || 1;
+
+      // Calculate final price
+      const price = calculatePrice(bagCount, weight, dist);
+
+      return { calculatedPrice: price, distance: dist.toFixed(2) };
+    } catch (error) {
+      console.error("Error calculating price:", error);
+      // Fallback to base price if calculation fails
+      return { calculatedPrice: 299, distance: "0" };
+    }
+  }, [bags, weight, dropLatitude, dropLongitude, pickupLatitude, pickupLongitude]);
+
+  // Function to fetch coordinates for drop location
+  const getDropLocationCoordinates = async (address) => {
+    try {
+      const GEO_API_KEY = "6a6f5450f3164727b88686b4a5a0fffd";
+      console.log("Fetching coordinates for address:", address);
+      
+      const response = await fetch(
+        `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(address)}&apiKey=${GEO_API_KEY}`
+      );
+      const data = await response.json();
+      
+      console.log("Geoapify API Response:", JSON.stringify(data, null, 2));
+      
+      if (data.features && data.features.length > 0) {
+        const feature = data.features[0];
+        
+        // Handle coordinates from geometry
+        let latitude = null;
+        let longitude = null;
+        
+        if (feature.geometry && feature.geometry.coordinates) {
+          // Geoapify returns [lon, lat] in geometry.coordinates
+          [longitude, latitude] = feature.geometry.coordinates;
+        } else if (feature.properties) {
+          // Try to get from properties
+          latitude = feature.properties.lat;
+          longitude = feature.properties.lon;
+        }
+        
+        console.log("Extracted coordinates - Latitude:", latitude, "Longitude:", longitude);
+        
+        if (latitude && longitude) {
+          return { latitude, longitude };
+        }
+      }
+      
+      console.warn("No valid coordinates found in Geoapify response");
+      return { latitude: null, longitude: null };
+    } catch (error) {
+      console.error("Error fetching drop location coordinates:", error);
+      return { latitude: null, longitude: null };
+    }
+  };
 
   const handleConfirmBooking = async () => {
     setIsLoading(true);
@@ -54,6 +129,14 @@ export default function BookingSummary() {
       const pickupDetails = await AsyncStorage.getItem('pickupLocationDetails');
       
       const pickupData = pickupDetails ? JSON.parse(pickupDetails) : {};
+
+      // Use the drop location coordinates passed through the flow
+      const dropCoords = {
+        latitude: dropLatitude ? parseFloat(dropLatitude) : null,
+        longitude: dropLongitude ? parseFloat(dropLongitude) : null
+      };
+      
+      console.log("Using drop coordinates from flow:", dropCoords);
 
       // Parse photos array
       let photosArray = [];
@@ -76,12 +159,8 @@ export default function BookingSummary() {
         terminal: terminal || 'T2',
         departureCity: depCity,
         departureAirport: depAirport,
-        arrivalCity: arrCity,
-        arrivalAirport: arrAirport,
         departureDate: depDate,
         departureTime: depTime,
-        arrivalDate: arrDate,
-        arrivalTime: arrTime,
 
         // Luggage Details
         bagCount: parseInt(bags) || 1,
@@ -97,31 +176,11 @@ export default function BookingSummary() {
         pickupLatitude: pickupData.latitude || null,
         pickupLongitude: pickupData.longitude || null,
         pickupTime: pickupTime,
-        pickupHouse: pickupData.house || '',
-        pickupStreet: pickupData.street || '',
-        pickupCity: pickupData.city || '',
-        pickupState: pickupData.state || '',
-        pickupPostal: pickupData.postalCode || '',
-        pickupCountry: pickupData.country || '',
-        pickupContactName: pickupData.name || '',
-        pickupContactPhone: pickupData.phone || '',
-        pickupTag: pickupData.tag || 'Pickup',
-        pickupNotes: additionalInfo,
 
-        // Drop Location
+        // Drop Location with coordinates
         dropAddress: dropLocation,
-        dropLatitude: null,
-        dropLongitude: null,
-        dropHouse: '',
-        dropStreet: '',
-        dropCity: '',
-        dropState: '',
-        dropPostal: '',
-        dropCountry: '',
-        dropContactName: '',
-        dropContactPhone: '',
-        dropTag: 'Drop Location',
-        dropNotes: '',
+        dropLatitude: dropCoords.latitude,
+        dropLongitude: dropCoords.longitude,
 
         // Photos
         photos: photosArray,
@@ -199,7 +258,7 @@ export default function BookingSummary() {
             <View style={styles.detailTexts}>
               <Text style={styles.detailLabel}>Flight</Text>
               <Text style={styles.detailMain}>{flightNo} • {airline}</Text>
-              <Text style={styles.detailSub}>{depCity} to {arrCity} • {depTime}</Text>
+              <Text style={styles.detailSub}>{depCity} • {depTime}</Text>
             </View>
           </View>
 
@@ -239,7 +298,10 @@ export default function BookingSummary() {
 
         <View style={styles.priceCard}>
           <Text style={styles.priceLabel}>Total to Pay</Text>
-          <Text style={styles.priceValue}>₹499.00</Text>
+          <Text style={styles.priceValue}>₹{calculatedPrice.toFixed(2)}</Text>
+          <Text style={styles.priceBreakdown}>
+            {distance > 0 ? `${distance} km away` : "Calculating..."}
+          </Text>
           <View style={styles.dotLine} />
           <Text style={styles.priceInfo}>EVERYTHING INCLUDED</Text>
         </View>
@@ -303,6 +365,7 @@ const styles = StyleSheet.create({
   priceCard: { backgroundColor: '#FAFAFC', borderRadius: 24, padding: 20, alignItems: 'center', marginBottom: 25, borderStyle: 'dashed', borderWidth: 1.5, borderColor: '#E5E5EA' },
   priceLabel: { fontSize: 14, color: '#8E8E93', fontWeight: '600' },
   priceValue: { fontSize: 38, fontWeight: '900', color: '#1C1C1E', marginVertical: 4 },
+  priceBreakdown: { fontSize: 12, color: '#A7A7AC', fontWeight: '500', marginTop: 4, marginBottom: 8 },
   dotLine: { width: 30, height: 2, backgroundColor: '#E5E5EA', marginVertical: 8 },
   priceInfo: { fontSize: 10, color: '#C7C7CC', fontWeight: '800' },
   payButton: { shadowColor: '#FF6B6B', shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 8 },

@@ -13,7 +13,8 @@ import {
   loadGlobalAirports, 
   loadIndianAirports, 
   loadGlobalAirlines 
-} from '../airportUtils'; 
+} from '../airportUtils';
+import { normalizeAirportName } from '../utils/airportMappings'; 
 
 const { width } = Dimensions.get('window');
 const SERVICEABLE_PINS = ['401303', '400001', '401202', '401208', '110001'];
@@ -27,7 +28,6 @@ export default function FlightDetails() {
   const [flightNo, setFlightNo] = useState(''); 
   const [terminal, setTerminal] = useState('T2');
   const [depCity, setDepCity] = useState(null);
-  const [arrCity, setArrCity] = useState(null); 
   
   const [depDate, setDepDate] = useState(new Date());
   const [depTime, setDepTime] = useState(new Date());
@@ -81,10 +81,14 @@ export default function FlightDetails() {
   };
 
   const handleContinue = () => {
-    if (!airline || !depCity || !arrCity || !flightNo) {
+    if (!airline || !depCity || !flightNo) {
         Alert.alert("Missing Information", "Please ensure all flight details are filled.");
         return;
     }
+    
+    // Normalize airport name to expand abbreviations
+    const normalizedAirportName = normalizeAirportName(depCity.name);
+    
     router.push({ 
         pathname: '/luggage', 
         params: { 
@@ -93,9 +97,7 @@ export default function FlightDetails() {
             flightNo, 
             terminal, 
             depCity: depCity.city,
-            depAirport: depCity.name,
-            arrCity: arrCity.city,
-            arrAirport: arrCity.name,
+            depAirport: normalizedAirportName,
             depDate: depDate.toLocaleDateString('en-GB'),
             depTime: depTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true}),
         } 
@@ -264,16 +266,7 @@ export default function FlightDetails() {
             ))}
         </View>
         <Text style={styles.terminalNote}>If your city doesn't have terminals, select Terminal 1.</Text>
-
-        <Text style={styles.inputLabel}>Arrival City</Text>
-        <TouchableOpacity style={styles.cityCard} onPress={() => {setSearchType('arr'); setSearchText(''); setSearchVisible(true);}}>
-            <View style={styles.iconCircle}><MaterialCommunityIcons name="map-marker-check" size={20} color="#FF4B2B" /></View>
-            <View style={styles.cityInfo}>
-                <Text style={styles.cityName}>{arrCity ? `${arrCity.city} (${arrCity.iata})` : "Select Arrival"}</Text>
-                <Text style={styles.airportName}>{arrCity ? arrCity.name : "Choose destination airport"}</Text>
-            </View>
-        </TouchableOpacity>
-
+        
         <Text style={styles.inputLabel}>Departure Date and Time</Text>
         <View style={styles.sideBySideRow}>
             <TouchableOpacity style={styles.dateBox} onPress={() => setShowPicker('depDate')}>
@@ -324,7 +317,6 @@ export default function FlightDetails() {
                 <TouchableOpacity style={styles.resItem} onPress={() => { 
                     if (searchType === 'airline') setAirline(item);
                     else if (searchType === 'dep') setDepCity(item);
-                    else if (searchType === 'arr') setArrCity(item);
                     setSearchVisible(false); 
                     setSearchText('');
                 }}>

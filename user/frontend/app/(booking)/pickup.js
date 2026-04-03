@@ -362,15 +362,60 @@ export default function PickupDetails() {
     }, [])
   );
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    console.log("DEBUG: handleConfirm - Current params:", JSON.stringify(params, null, 2));
+    
+    // Get pickup coordinates from AsyncStorage
+    let pickupLocationCoords = { latitude: "", longitude: "" };
+    try {
+      const stored = await AsyncStorage.getItem("pickupLocationDetails");
+      if (stored) {
+        const data = JSON.parse(stored);
+        pickupLocationCoords = {
+          latitude: data.latitude || "",
+          longitude: data.longitude || ""
+        };
+        console.log("Retrieved pickup coordinates:", pickupLocationCoords);
+      }
+    } catch (e) {
+      console.log("Error retrieving pickup coordinates:", e);
+    }
+    
     router.push({
       pathname: '/(booking)/confirm',
       params: { 
-        ...params,
+        // Flight details
+        isInternational: params?.isInternational || "false",
+        airline: params?.airline || "Not selected",
+        flightNo: params?.flightNo || "N/A",
+        terminal: params?.terminal || "T2",
+        depCity: params?.depCity || "",
+        depAirport: params?.depAirport || "",
+        depDate: params?.depDate || "",
+        depTime: params?.depTime || "",
+        
+        // Luggage details
+        bags: params?.bags || "0",
+        weight: params?.weight || "0 kg",
+        fragile: params?.fragile || "false",
+        checkin: params?.checkin || "false",
+        photos: params?.photos || "[]",
+        
+        // Drop location
+        dropLocation: params?.dropLocation || "Not available",
+        dropLatitude: params?.dropLatitude,
+        dropLongitude: params?.dropLongitude,
+        
+        // Pickup details (updated)
         pincode,
         pickupAddress,
         pickupTime: pickupTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-        additionalInfo
+        additionalInfo,
+        pickupLatitude: pickupLocationCoords.latitude,
+        pickupLongitude: pickupLocationCoords.longitude,
+        
+        // Preserve any other params
+        ...params
       }
     });
   };
@@ -440,8 +485,14 @@ export default function PickupDetails() {
             style={styles.inputWrapper}
             onPress={() =>
               router.push({
-                pathname: "/search_pickup",
-                params: { address: pickupAddress },
+                pathname: "/(booking)/search_pickup",
+                params: { 
+                  address: pickupAddress, 
+                  sourceScreen: "pickup",
+                  dropLocation: params?.dropLocation,
+                  dropLatitude: params?.dropLatitude,
+                  dropLongitude: params?.dropLongitude
+                },
               })
             }
           >

@@ -2,13 +2,15 @@ import React, { useState } from "react";
 import { 
   View, TextInput, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView, Platform 
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from '@expo/vector-icons';
 import axios from "axios";
 
 
 export default function Pickup() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const sourceScreen = params?.sourceScreen || "home"; // Default to home if not specified
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
 
@@ -43,12 +45,34 @@ export default function Pickup() {
   };
 
   const selectAddress = (item) => {
-  router.push({
+  // Use replace instead of push to avoid nested navigation stack
+  // This makes the stack: pickup → map (instead of pickup → search → map)
+  router.replace({
     pathname: "/(booking)/map",
     params: { 
       selectedAddress: item.formatted, 
       lat: item.lat, 
-      lon: item.lon 
+      lon: item.lon,
+      sourceScreen: sourceScreen,
+      // Preserve all booking parameters
+      dropLocation: params?.dropLocation,
+      dropLatitude: params?.dropLatitude,
+      dropLongitude: params?.dropLongitude,
+      isInternational: params?.isInternational,
+      airline: params?.airline,
+      flightNo: params?.flightNo,
+      terminal: params?.terminal,
+      depCity: params?.depCity,
+      depAirport: params?.depAirport,
+      depDate: params?.depDate,
+      depTime: params?.depTime,
+      bags: params?.bags,
+      weight: params?.weight,
+      fragile: params?.fragile,
+      checkin: params?.checkin,
+      photos: params?.photos,
+      pincode: params?.pincode,
+      additionalInfo: params?.additionalInfo
     }
   });
 };
@@ -58,7 +82,7 @@ export default function Pickup() {
       {/* ---------- HEADER ---------- */}
       <View style={styles.header}>
         <TouchableOpacity 
-          onPress={() => router.push("/(tabs)/index")}
+          onPress={() => router.back()}
           style={styles.backBtn}
         >
           <Ionicons name="arrow-back" size={24} color="#1A1C1E" />
@@ -97,7 +121,10 @@ export default function Pickup() {
 
       {/* ---------- BOTTOM BUTTON ---------- */}
       <TouchableOpacity 
-        onPress={() => router.push("/(booking)/map")}
+        onPress={() => router.push({
+          pathname: "/(booking)/map",
+          params: { sourceScreen: sourceScreen }
+        })}
         style={styles.selectMapBtn}
       >
         <Ionicons name="map" size={20} color="#FFF" style={{ marginRight: 8 }} />

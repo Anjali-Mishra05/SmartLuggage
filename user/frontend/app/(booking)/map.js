@@ -24,6 +24,7 @@ const GEO_API_KEY = "6a6f5450f3164727b88686b4a5a0fffd";
 export default function MapScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const sourceScreen = params?.sourceScreen || "home"; // Determine where to return to
   const scrollRef = useRef(null);
 
   const [region, setRegion] = useState(null);
@@ -187,7 +188,7 @@ export default function MapScreen() {
     })
   ).current;
 
-  // ✅ SAVE + GO HOMEPAGE
+  // ✅ SAVE + GO BACK TO SOURCE SCREEN
   const handleConfirm = async () => {
   const pickupData = {
     address: selectedAddress,
@@ -222,7 +223,17 @@ export default function MapScreen() {
     JSON.stringify(pickupData)
   );
 
-    router.push('/(tabs)');
+    // ✅ Route back based on source screen
+    // IMPORTANT: Use router.back() to preserve the entire navigation stack
+    if (sourceScreen === "search_pickup") {
+      // Save pickup to AsyncStorage, then use back button to return with data preserved
+      router.back();
+    } else if (sourceScreen === "pickup") {
+      // Save pickup to AsyncStorage, then use back button to return with data preserved
+      router.back();
+    } else {
+      router.push("/(tabs)");
+    }
   } catch (err) {
     console.log("Error saving pickup:", err);
   }
@@ -293,8 +304,8 @@ export default function MapScreen() {
                 style={styles.changeBtn}
                 onPress={() =>
                   router.push({
-                    pathname: "search_pickup",
-                    params: { focusSearch: true },
+                    pathname: "/(booking)/search_pickup",
+                    params: { focusSearch: true, sourceScreen: sourceScreen },
                   })
                 }
               >

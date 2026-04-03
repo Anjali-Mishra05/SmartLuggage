@@ -7,7 +7,7 @@ const db = mysql.createConnection({
     user: process.env.DB_USER || "root",
     password: process.env.DB_PASSWORD || "",
     database: process.env.DB_NAME || "smart_luggage",
-    port: 3306
+    port: 3307
 });
 
 db.connect((err) => {

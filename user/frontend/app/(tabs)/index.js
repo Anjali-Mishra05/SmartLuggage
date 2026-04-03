@@ -1608,31 +1608,18 @@ export default function Home() {
                 <Text style={styles.greetingText}>{greeting}, {displayName} 👋</Text>
                 <Text style={styles.subGreeting}>Your luggage service at your fingertips</Text>
               </View>
-              <View style={styles.profileCircle}>
-                <Text style={styles.profileInitial}>{displayInitial}</Text>
-              </View>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(tabs)/profile')}>
+                <View style={styles.profileCircle}>
+                  <Text style={styles.profileInitial}>{displayInitial}</Text>
+                </View>
+              </TouchableOpacity>
             </View>
 
-            {/* STATS */}
-            <View style={styles.statsRow}>
-              <View style={styles.statBox}>
-                <MaterialCommunityIcons name="package-variant" size={20} color="#FFF" />
-                <Text style={styles.statNumber}>10K+</Text>
-                <Text style={styles.statLabel}>Deliveries</Text>
-              </View>
-              <View style={styles.statBox}>
-                <MaterialCommunityIcons name="star" size={20} color="#FFF" />
-                <Text style={styles.statNumber}>4.9</Text>
-                <Text style={styles.statLabel}>Rating</Text>
-              </View>
-              <View style={styles.statBox}>
-                <MaterialCommunityIcons name="clock-fast" size={20} color="#FFF" />
-                <Text style={styles.statNumber}>30min</Text>
-                <Text style={styles.statLabel}>Avg Time</Text>
-              </View>
-            </View>
           </SafeAreaView>
         </LinearGradient>
+
+        {/* SPACER */}
+        <View style={{ height: 16 }} />
 
         {/* PICKUP */}
         <TouchableOpacity
@@ -1640,8 +1627,8 @@ export default function Home() {
           activeOpacity={0.9}
           onPress={() =>
             router.push({
-              pathname: "/search_pickup",
-              params: { address: pickupAddress, onSelect: onUserSelectPickup },
+              pathname: "/(booking)/search_pickup",
+              params: { address: pickupAddress, sourceScreen: "home" },
             })
           }
         >
@@ -1803,9 +1790,11 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)'
   },
   profileInitial: { color: '#FFF', fontWeight: 'bold', fontSize: 18 },
 
