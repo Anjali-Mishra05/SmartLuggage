@@ -37,6 +37,8 @@ export default function BookingSummary() {
     checkin = false,
     fragile = false,
     dropLocation = "Not available",
+    dropLat = null,
+    dropLon = null,
     photos = "[]",
 
     // From pickup.js
@@ -108,8 +110,8 @@ export default function BookingSummary() {
 
         // Drop Location
         dropAddress: dropLocation,
-        dropLatitude: null,
-        dropLongitude: null,
+        dropLatitude: dropLat ? parseFloat(dropLat) : null,
+        dropLongitude: dropLon ? parseFloat(dropLon) : null,
         dropHouse: '',
         dropStreet: '',
         dropCity: '',

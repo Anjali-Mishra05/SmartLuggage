@@ -187,7 +187,7 @@ export default function MapScreen() {
     })
   ).current;
 
-  // ✅ SAVE + GO HOMEPAGE
+  // ✅ SAVE + GO HOMEPAGE OR PICKUP
   const handleConfirm = async () => {
   const pickupData = {
     address: selectedAddress,
@@ -197,7 +197,7 @@ export default function MapScreen() {
     tag: selectedTag === "Other" ? customTag : selectedTag,
     latitude: markerCoord?.latitude,
     longitude: markerCoord?.longitude,
-    userSelected: true, // ✅ IMPORTANT FLAG
+    userSelected: true,
     street: selectedAddress.split(',')[0] || '',
     city: selectedAddress.split(',')[1] || '',
     state: selectedAddress.split(',')[2] || '',
@@ -212,6 +212,7 @@ export default function MapScreen() {
   JSON.stringify({
     address: selectedAddress,
     userSelected: true,
+    from: params?.from || "homepage",
     ...pickupData
   })
 );
@@ -222,7 +223,12 @@ export default function MapScreen() {
     JSON.stringify(pickupData)
   );
 
-    router.push('/(tabs)');
+    // ✅ If coming from pickup screen, go directly back to pickup; otherwise go to homepage
+    if (params?.from === "pickup") {
+      router.replace('/(booking)/pickup');
+    } else {
+      router.push('/(tabs)');
+    }
   } catch (err) {
     console.log("Error saving pickup:", err);
   }

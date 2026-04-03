@@ -42,14 +42,16 @@ export const loadIndianAirports = async () => {
       const parts = splitCSVLine(line);
 
       return {
-        iata: parts[0]?.replace(/["']/g, '').trim() || '',
-        name: parts[1]?.replace(/["']/g, '').trim() || 'Unknown Airport',
-        city: parts[2]?.replace(/["']/g, '').trim() || 'Unknown City',
+        iata: parts[17]?.replace(/["']/g, '').trim() || '',
+        name: parts[3]?.replace(/["']/g, '').trim() || 'Unknown Airport',
+        city: parts[13]?.replace(/["']/g, '').trim() || 'Unknown City',
         country: 'India',
-        isDomestic: true
+        isDomestic: true,
+        latitude: parseFloat(parts[4]?.replace(/["']/g, '').trim()),
+        longitude: parseFloat(parts[5]?.replace(/["']/g, '').trim())
       };
     })
-    .filter(a => a.name !== 'Unknown Airport'); // keep valid
+    .filter(a => a.name !== 'Unknown Airport' && a.iata); // keep valid with iata
   } catch (e) {
     console.log("Indian Airport Error:", e);
     return [];
@@ -68,13 +70,17 @@ export const loadGlobalAirports = async () => {
       const parts = splitCSVLine(line);
 
       const iata = parts[4]?.replace(/["']/g, '').trim();
+      const latitude = parseFloat(parts[6]?.replace(/["']/g, '').trim());
+      const longitude = parseFloat(parts[7]?.replace(/["']/g, '').trim());
 
       return {
         iata: (iata && iata !== '\\N') ? iata : '',
         name: parts[1]?.replace(/["']/g, '').trim() || 'Unknown Airport',
         city: parts[2]?.replace(/["']/g, '').trim() || 'Unknown City',
         country: parts[3]?.replace(/["']/g, '').trim() || '',
-        isDomestic: false
+        isDomestic: false,
+        latitude: !isNaN(latitude) ? latitude : null,
+        longitude: !isNaN(longitude) ? longitude : null
       };
     })
     .filter(a => a.name !== 'Unknown Airport');

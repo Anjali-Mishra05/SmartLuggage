@@ -239,6 +239,8 @@ export default function LuggageDetails() {
                 fragile: fragile,
                 checkin: checkinSelected,
                 dropLocation: dropLocation.address,
+                dropLat: flightParams.depLat,
+                dropLon: flightParams.depLon,
                 photos: JSON.stringify(photos) 
               }
             });

@@ -2,13 +2,14 @@ import React, { useState } from "react";
 import { 
   View, TextInput, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView, Platform 
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from '@expo/vector-icons';
 import axios from "axios";
 
 
 export default function Pickup() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
 
@@ -48,7 +49,8 @@ export default function Pickup() {
     params: { 
       selectedAddress: item.formatted, 
       lat: item.lat, 
-      lon: item.lon 
+      lon: item.lon,
+      from: params?.from || "homepage"
     }
   });
 };

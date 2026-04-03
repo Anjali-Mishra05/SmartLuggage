@@ -313,7 +313,7 @@ export default function PickupDetails() {
 
       const loadPickup = async () => {
         try {
-          // First, check if there's a pickupDetails object with address
+          // Check if there's a pickupDetails object with address
           const saved = await AsyncStorage.getItem("pickupDetails");
           if (saved && isActive) {
             const data = JSON.parse(saved);
@@ -347,7 +347,9 @@ export default function PickupDetails() {
         pincode,
         pickupAddress,
         pickupTime: pickupTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-        additionalInfo
+        additionalInfo,
+        dropLat: params.dropLat,
+        dropLon: params.dropLon
       }
     });
   };
@@ -418,7 +420,7 @@ export default function PickupDetails() {
             onPress={() =>
               router.push({
                 pathname: "/search_pickup",
-                params: { address: pickupAddress },
+                params: { address: pickupAddress, from: "pickup" },
               })
             }
           >
