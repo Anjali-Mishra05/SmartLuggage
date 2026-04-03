@@ -157,6 +157,52 @@ app.post("/api/geocode", async (req, res) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
+
+// DEBUG endpoint - Get all users
+app.get("/api/debug/all-users", (req, res) => {
+  const query = "SELECT id, name, phone, email FROM users LIMIT 20";
+  require("./db").query(query, (err, results) => {
+    if (err) {
+      return res.json({ success: false, message: "DB Error", error: err });
+    }
+    res.json({ 
+      success: true, 
+      users: results,
+      count: results.length
+    });
+  });
+});
+
+// DEBUG endpoint - Get all bookings count
+app.get("/api/debug/all-bookings", (req, res) => {
+  const query = "SELECT COUNT(*) as total FROM bookings";
+  require("./db").query(query, (err, results) => {
+    if (err) {
+      return res.json({ success: false, message: "DB Error", error: err });
+    }
+    res.json({ 
+      success: true, 
+      totalBookings: results[0].total,
+      message: `Total bookings in database: ${results[0].total}`
+    });
+  });
+});
+
+// DEBUG endpoint - Get all phone numbers in bookings
+app.get("/api/debug/all-phones", (req, res) => {
+  const query = "SELECT DISTINCT phone FROM bookings LIMIT 20";
+  require("./db").query(query, (err, results) => {
+    if (err) {
+      return res.json({ success: false, message: "DB Error", error: err });
+    }
+    res.json({ 
+      success: true, 
+      phones: results.map(r => r.phone),
+      count: results.length
+    });
+  });
+});
+
 app.get("/", (req, res) => {
   res.send("Server is working ✅");
 });

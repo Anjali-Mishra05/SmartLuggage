@@ -24,8 +24,12 @@ const initializeDatabase = (callback) => {
       terminal VARCHAR(50),
       departure_city VARCHAR(100),
       departure_airport VARCHAR(255),
+      arrival_city VARCHAR(100),
+      arrival_airport VARCHAR(255),
       departure_date VARCHAR(20),
       departure_time VARCHAR(20),
+      arrival_date VARCHAR(20),
+      arrival_time VARCHAR(20),
       bag_count INT DEFAULT 1,
       bag_weight VARCHAR(20),
       is_fragile TINYINT DEFAULT 0,
@@ -61,7 +65,16 @@ const initializeDatabase = (callback) => {
       booking_id INT NOT NULL,
       photo_url VARCHAR(500),
       uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`
+    )`,
+
+    // 5. Add missing columns to bookings table
+    `ALTER TABLE bookings ADD arrival_city VARCHAR(100)`,
+    `ALTER TABLE bookings ADD arrival_airport VARCHAR(255)`,
+    `ALTER TABLE bookings ADD arrival_date VARCHAR(20)`,
+    `ALTER TABLE bookings ADD arrival_time VARCHAR(20)`,
+    `ALTER TABLE bookings ADD drop_address TEXT`,
+    `ALTER TABLE bookings ADD drop_latitude FLOAT`,
+    `ALTER TABLE bookings ADD drop_longitude FLOAT`
   ];
 
   let queryIndex = 0;
@@ -85,7 +98,7 @@ const initializeDatabase = (callback) => {
           console.error(`❌ Error creating table:`, err.message);
         } else {
           // Suppress non-critical errors for other queries
-          const suppressed = ['ER_TABLE_EXISTS_ERROR', 'ER_BAD_TABLE_ERROR', 'ER_CANNOT_ADD_FOREIGN', 'ER_FK_COLUMN_CANNOT_DROP'];
+          const suppressed = ['ER_TABLE_EXISTS_ERROR', 'ER_BAD_TABLE_ERROR', 'ER_CANNOT_ADD_FOREIGN', 'ER_FK_COLUMN_CANNOT_DROP', 'ER_DUP_FIELDNAME'];
           if (!suppressed.includes(err.code)) {
             console.error(`❌ Error in query:`, err.message);
           }

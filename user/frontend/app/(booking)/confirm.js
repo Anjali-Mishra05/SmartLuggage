@@ -9,13 +9,39 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createBooking } from '../utils/bookingService';
 import { calculatePrice, calculateDistance } from '../utils/pricingCalculator';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import * as Location from 'expo-location';
 
 export default function BookingSummary() {
   const router = useRouter();
   const params = useLocalSearchParams(); 
   const [isLoading, setIsLoading] = useState(false);
+  
+  // State for pickup coordinates (freshly loaded from AsyncStorage)
+  const [pickupCoords, setPickupCoords] = useState({
+    latitude: params.pickupLatitude ? parseFloat(params.pickupLatitude) : null,
+    longitude: params.pickupLongitude ? parseFloat(params.pickupLongitude) : null
+  });
+
+  // Load latest pickup coordinates from AsyncStorage on mount
+  useEffect(() => {
+    const loadPickupCoordinates = async () => {
+      try {
+        const pickupDetails = await AsyncStorage.getItem('pickupLocationDetails');
+        if (pickupDetails) {
+          const data = JSON.parse(pickupDetails);
+          setPickupCoords({
+            latitude: data.latitude,
+            longitude: data.longitude
+          });
+        }
+      } catch (error) {
+        console.error("Error loading pickup coordinates:", error);
+      }
+    };
+
+    loadPickupCoordinates();
+  }, []);
 
   // Destructure all data passed through the chain
   const { 
@@ -51,9 +77,9 @@ export default function BookingSummary() {
   // Calculate price and distance dynamically
   const { calculatedPrice, distance } = useMemo(() => {
     try {
-      // Parse coordinates
-      const pLat = parseFloat(pickupLatitude);
-      const pLon = parseFloat(pickupLongitude);
+      // Use pickup coordinates from state (freshly loaded from AsyncStorage)
+      const pLat = pickupCoords.latitude;
+      const pLon = pickupCoords.longitude;
       const dLat = parseFloat(dropLatitude);
       const dLon = parseFloat(dropLongitude);
 
@@ -75,7 +101,7 @@ export default function BookingSummary() {
       // Fallback to base price if calculation fails
       return { calculatedPrice: 299, distance: "0" };
     }
-  }, [bags, weight, dropLatitude, dropLongitude, pickupLatitude, pickupLongitude]);
+  }, [bags, weight, dropLatitude, dropLongitude, pickupCoords]);
 
   // Function to fetch coordinates for drop location
   const getDropLocationCoordinates = async (address) => {
@@ -124,11 +150,8 @@ export default function BookingSummary() {
   const handleConfirmBooking = async () => {
     setIsLoading(true);
     try {
-      // Get user details and pickup location details from AsyncStorage
+      // Get user details from AsyncStorage
       const userName = await AsyncStorage.getItem('userName');
-      const pickupDetails = await AsyncStorage.getItem('pickupLocationDetails');
-      
-      const pickupData = pickupDetails ? JSON.parse(pickupDetails) : {};
 
       // Use the drop location coordinates passed through the flow
       const dropCoords = {
@@ -146,7 +169,7 @@ export default function BookingSummary() {
         console.log("Could not parse photos:", e);
       }
 
-      // Prepare booking data
+      // Prepare booking data with proper coordinates
       const bookingData = {
         // User details
         username: userName || 'User',
@@ -171,10 +194,10 @@ export default function BookingSummary() {
         // Pincode
         pincode: pincode,
 
-        // Pickup Location
+        // Pickup Location with coordinates from state
         pickupAddress: pickupAddress,
-        pickupLatitude: pickupData.latitude || null,
-        pickupLongitude: pickupData.longitude || null,
+        pickupLatitude: pickupCoords.latitude,
+        pickupLongitude: pickupCoords.longitude,
         pickupTime: pickupTime,
 
         // Drop Location with coordinates
