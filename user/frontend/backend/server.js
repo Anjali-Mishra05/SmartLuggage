@@ -5,6 +5,8 @@ const bodyParser = require("body-parser");
 const https = require("https");
 const authRoutes = require("./routes/auth");
 const bookingRoutes = require("./routes/bookings");
+const paymentRoutes = require("./routes/payments");
+const receiptRoutes = require("./routes/receipts");
 const initializeDatabase = require("./initDB");
 
 const app = express();
@@ -157,6 +159,8 @@ app.post("/api/geocode", async (req, res) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/receipts", receiptRoutes);
 
 // DEBUG endpoint - Get all users
 app.get("/api/debug/all-users", (req, res) => {

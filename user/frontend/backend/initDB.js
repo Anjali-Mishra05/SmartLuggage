@@ -45,10 +45,27 @@ const initializeDatabase = (callback) => {
       photos LONGTEXT,
       additional_info TEXT,
       status VARCHAR(20) DEFAULT 'pending',
+      payment_status VARCHAR(20) DEFAULT 'pending',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
-    // 3. Create Booking Locations Table if not exists
+    // 3. Create Payments Table if not exists
+    `CREATE TABLE IF NOT EXISTS payments (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      booking_id INT NOT NULL,
+      phone VARCHAR(20) NOT NULL,
+      razorpay_order_id VARCHAR(100) NOT NULL UNIQUE,
+      razorpay_payment_id VARCHAR(100),
+      amount DECIMAL(10, 2) NOT NULL,
+      status ENUM('pending', 'completed', 'failed', 'cancelled') DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      verified_at TIMESTAMP NULL,
+      FOREIGN KEY (booking_id) REFERENCES bookings(id),
+      INDEX idx_phone (phone),
+      INDEX idx_razorpay_order (razorpay_order_id)
+    )`,
+
+    // 4. Create Booking Locations Table if not exists
     `CREATE TABLE IF NOT EXISTS booking_locations (
       id INT AUTO_INCREMENT PRIMARY KEY,
       booking_id INT NOT NULL,
@@ -59,7 +76,7 @@ const initializeDatabase = (callback) => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
-    // 4. Create Luggage Photos Table if not exists
+    // 5. Create Luggage Photos Table if not exists
     `CREATE TABLE IF NOT EXISTS luggage_photos (
       id INT AUTO_INCREMENT PRIMARY KEY,
       booking_id INT NOT NULL,
@@ -67,14 +84,15 @@ const initializeDatabase = (callback) => {
       uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
-    // 5. Add missing columns to bookings table
+    // 6. Add missing columns to bookings table
     `ALTER TABLE bookings ADD arrival_city VARCHAR(100)`,
     `ALTER TABLE bookings ADD arrival_airport VARCHAR(255)`,
     `ALTER TABLE bookings ADD arrival_date VARCHAR(20)`,
     `ALTER TABLE bookings ADD arrival_time VARCHAR(20)`,
     `ALTER TABLE bookings ADD drop_address TEXT`,
     `ALTER TABLE bookings ADD drop_latitude FLOAT`,
-    `ALTER TABLE bookings ADD drop_longitude FLOAT`
+    `ALTER TABLE bookings ADD drop_longitude FLOAT`,
+    `ALTER TABLE bookings ADD payment_status VARCHAR(20) DEFAULT 'pending'`
   ];
 
   let queryIndex = 0;
@@ -106,6 +124,7 @@ const initializeDatabase = (callback) => {
       } else {
         if (query.includes('CREATE TABLE users')) console.log("✅ Users table created");
         if (query.includes('CREATE TABLE bookings')) console.log("✅ Bookings table created");
+        if (query.includes('CREATE TABLE payments')) console.log("✅ Payments table created");
         if (query.includes('CREATE TABLE booking_locations')) console.log("✅ Booking Locations table created");
         if (query.includes('CREATE TABLE luggage_photos')) console.log("✅ Luggage Photos table created");
         if (query.includes('DROP TABLE')) console.log(`✅ Cleaned up old tables`);

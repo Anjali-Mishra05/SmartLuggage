@@ -8,14 +8,20 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createBooking } from '../utils/bookingService';
+import { createPaymentOrder, verifyPayment } from '../utils/paymentService';
 import { calculatePrice, calculateDistance } from '../utils/pricingCalculator';
 import { useState, useMemo, useEffect } from 'react';
 import * as Location from 'expo-location';
+import RazorpayPaymentModal from '../../components/RazorpayPaymentModal.js';
 
 export default function BookingSummary() {
   const router = useRouter();
   const params = useLocalSearchParams(); 
   const [isLoading, setIsLoading] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [orderId, setOrderId] = useState(null);
+  const [currentBookingId, setCurrentBookingId] = useState(null);
+  const [bookingAmount, setBookingAmount] = useState(null);
   
   // State for pickup coordinates (freshly loaded from AsyncStorage)
   const [pickupCoords, setPickupCoords] = useState({
@@ -216,22 +222,16 @@ export default function BookingSummary() {
       const response = await createBooking(bookingData);
       
       if (response.success) {
-        Alert.alert(
-          'Success',
-          'Booking confirmed successfully!',
-          [
-            {
-              text: 'Continue',
-              onPress: () => {
-                // Clear temporary booking details from storage
-                AsyncStorage.removeItem('pickupDetails');
-                
-                // Navigate to home or bookings screen
-                router.replace('/(tabs)');
-              },
-            },
-          ]
-        );
+        const newBookingId = response.bookingId;
+        setCurrentBookingId(newBookingId);
+        setBookingAmount(calculatedPrice);
+        
+        // Create payment order
+        const paymentOrder = await createPaymentOrder(newBookingId, calculatedPrice, `Smart Luggage Booking #${newBookingId}`);
+        setOrderId(paymentOrder.id);
+        
+        // Show payment modal
+        setShowPayment(true);
       } else {
         Alert.alert('Error', response.message || 'Failed to confirm booking');
       }
@@ -241,6 +241,46 @@ export default function BookingSummary() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Handle payment success
+  const handlePaymentSuccess = async (response) => {
+    try {
+      setIsLoading(true);
+      await verifyPayment(
+        currentBookingId,
+        response.razorpay_order_id,
+        response.razorpay_payment_id,
+        response.razorpay_signature
+      );
+      
+      // Clear temporary booking details from storage
+      await AsyncStorage.removeItem('pickupDetails');
+      
+      Alert.alert(
+        'Payment Successful',
+        'Your booking is confirmed and payment received!',
+        [
+          {
+            text: 'View Bookings',
+            onPress: () => {
+              setShowPayment(false);
+              router.replace('/(tabs)/bookings');
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      Alert.alert('Payment Verification Failed', error.message );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle payment failure
+  const handlePaymentFailed = (error) => {
+    Alert.alert('Payment Failed', error);
+    setShowPayment(false);
   };
 
   return (
@@ -353,6 +393,21 @@ export default function BookingSummary() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Payment Modal */}
+      {showPayment && orderId && currentBookingId && (
+        <RazorpayPaymentModal
+          visible={showPayment}
+          bookingId={currentBookingId}
+          amount={bookingAmount}
+          description={`Smart Luggage Booking #${currentBookingId}`}
+          razorpayKey={process.env.EXPO_PUBLIC_RAZORPAY_KEY || 'rzp_test_SZ84pQ5TgzIQgF'}
+          razorpayOrderId={orderId}
+          onPaymentSuccess={handlePaymentSuccess}
+          onPaymentFailed={handlePaymentFailed}
+          onClose={() => setShowPayment(false)}
+        />
+      )}
     </SafeAreaView>
   );
 }
