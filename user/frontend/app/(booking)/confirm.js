@@ -14,6 +14,40 @@ export default function BookingSummary() {
   const router = useRouter();
   const params = useLocalSearchParams(); 
   const [isLoading, setIsLoading] = useState(false);
+<<<<<<< Updated upstream
+=======
+  const [showPayment, setShowPayment] = useState(false);
+  const [orderId, setOrderId] = useState(null);
+  const [currentBookingId, setCurrentBookingId] = useState(null);
+  const [bookingAmount, setBookingAmount] = useState(null);
+  const [razorpayKey, setRazorpayKey] = useState(null);
+  
+  // State for pickup coordinates (freshly loaded from AsyncStorage)
+  const [pickupCoords, setPickupCoords] = useState({
+    latitude: params.pickupLatitude ? parseFloat(params.pickupLatitude) : null,
+    longitude: params.pickupLongitude ? parseFloat(params.pickupLongitude) : null
+  });
+
+  // Load latest pickup coordinates from AsyncStorage on mount
+  useEffect(() => {
+    const loadPickupCoordinates = async () => {
+      try {
+        const pickupDetails = await AsyncStorage.getItem('pickupLocationDetails');
+        if (pickupDetails) {
+          const data = JSON.parse(pickupDetails);
+          setPickupCoords({
+            latitude: data.latitude,
+            longitude: data.longitude
+          });
+        }
+      } catch (error) {
+        console.error("Error loading pickup coordinates:", error);
+      }
+    };
+
+    loadPickupCoordinates();
+  }, []);
+>>>>>>> Stashed changes
 
   // Destructure all data passed through the chain
   const { 
@@ -48,6 +82,82 @@ export default function BookingSummary() {
     additionalInfo = ""
   } = params;
 
+<<<<<<< Updated upstream
+=======
+  // Calculate price and distance dynamically
+  const { calculatedPrice, distance } = useMemo(() => {
+    try {
+      // Use pickup coordinates from state (freshly loaded from AsyncStorage)
+      const pLat = pickupCoords.latitude;
+      const pLon = pickupCoords.longitude;
+      const dLat = parseFloat(dropLatitude);
+      const dLon = parseFloat(dropLongitude);
+
+      // Calculate distance if we have valid coordinates
+      let dist = 0;
+      if (!isNaN(pLat) && !isNaN(pLon) && !isNaN(dLat) && !isNaN(dLon)) {
+        dist = calculateDistance(pLat, pLon, dLat, dLon);
+      }
+
+      // Parse bag count (convert to number)
+      const bagCount = parseInt(bags) || 1;
+
+      // Calculate final price (TESTING: Set to ₹1)
+      const price = 1;
+
+      return { calculatedPrice: price, distance: dist.toFixed(2) };
+    } catch (error) {
+      console.error("Error calculating price:", error);
+      // Fallback to base price if calculation fails
+      return { calculatedPrice: 1, distance: "0" };
+    }
+  }, [bags, weight, dropLatitude, dropLongitude, pickupCoords]);
+
+  // Function to fetch coordinates for drop location
+  const getDropLocationCoordinates = async (address) => {
+    try {
+      const GEO_API_KEY = "6a6f5450f3164727b88686b4a5a0fffd";
+      console.log("Fetching coordinates for address:", address);
+      
+      const response = await fetch(
+        `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(address)}&apiKey=${GEO_API_KEY}`
+      );
+      const data = await response.json();
+      
+      console.log("Geoapify API Response:", JSON.stringify(data, null, 2));
+      
+      if (data.features && data.features.length > 0) {
+        const feature = data.features[0];
+        
+        // Handle coordinates from geometry
+        let latitude = null;
+        let longitude = null;
+        
+        if (feature.geometry && feature.geometry.coordinates) {
+          // Geoapify returns [lon, lat] in geometry.coordinates
+          [longitude, latitude] = feature.geometry.coordinates;
+        } else if (feature.properties) {
+          // Try to get from properties
+          latitude = feature.properties.lat;
+          longitude = feature.properties.lon;
+        }
+        
+        console.log("Extracted coordinates - Latitude:", latitude, "Longitude:", longitude);
+        
+        if (latitude && longitude) {
+          return { latitude, longitude };
+        }
+      }
+      
+      console.warn("No valid coordinates found in Geoapify response");
+      return { latitude: null, longitude: null };
+    } catch (error) {
+      console.error("Error fetching drop location coordinates:", error);
+      return { latitude: null, longitude: null };
+    }
+  };
+
+>>>>>>> Stashed changes
   const handleConfirmBooking = async () => {
     setIsLoading(true);
     try {
@@ -134,6 +244,7 @@ export default function BookingSummary() {
       const response = await createBooking(bookingData);
       
       if (response.success) {
+<<<<<<< Updated upstream
         Alert.alert(
           'Success',
           'Booking confirmed successfully!',
@@ -150,6 +261,19 @@ export default function BookingSummary() {
             },
           ]
         );
+=======
+        const newBookingId = response.bookingId;
+        setCurrentBookingId(newBookingId);
+        setBookingAmount(calculatedPrice);
+        
+        // Create payment order
+        const paymentOrder = await createPaymentOrder(newBookingId, calculatedPrice, `Smart Luggage Booking #${newBookingId}`);
+        setOrderId(paymentOrder.id);
+        setRazorpayKey(paymentOrder.key_id);
+        
+        // Show payment modal
+        setShowPayment(true);
+>>>>>>> Stashed changes
       } else {
         Alert.alert('Error', response.message || 'Failed to confirm booking');
       }
@@ -268,6 +392,24 @@ export default function BookingSummary() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+<<<<<<< Updated upstream
+=======
+
+      {/* Payment Modal */}
+      {showPayment && orderId && currentBookingId && razorpayKey && (
+        <RazorpayPaymentModal
+          visible={showPayment}
+          bookingId={currentBookingId}
+          amount={bookingAmount}
+          description={`Smart Luggage Booking #${currentBookingId}`}
+          razorpayKey={razorpayKey}
+          razorpayOrderId={orderId}
+          onPaymentSuccess={handlePaymentSuccess}
+          onPaymentFailed={handlePaymentFailed}
+          onClose={() => setShowPayment(false)}
+        />
+      )}
+>>>>>>> Stashed changes
     </SafeAreaView>
   );
 }
